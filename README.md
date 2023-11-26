@@ -79,6 +79,8 @@ def drive_forward(secs) {
   wheels.speed = 50
   wheels.direction = WheelDirection.FORWARD
   timer.run_and_wait(secs)
+  wheels.speed = 0
+  wheels.direction = WheelDirection.NONE
 }
 
 drive_forward(10) # drive forward for 10 seconds
