@@ -44,13 +44,26 @@ pub enum Token {
     Identifier(String),
     Integer(usize),
     Decimal(f64),
+    StringLiteral(String),
     Plus,
     Minus,
     OpenParen,
     CloseParen,
+    OpenSquareBracket,
+    CloseSquareBracket,
+    OpenCurlyBrace,
+    CloseCurlyBrace,
+    Colon,
+    Comma,
     Multiply,
     Divide,
+    Modulo,
+    Not,
+    GreaterThan,
+    LessThan,
     Equals,
+    // Whitespace, ignore, cz whitespace is not getting used as syntax part
+    Newline,
 }
 
 impl From<String> for Token {
