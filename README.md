@@ -2,6 +2,10 @@
 
 This parser is used for parsing game code and get low-level instructions for game objects in game
 
+## TODO
+
+Add keyword recognizing in lexer like "def", "true", "false", "return", "if", "else", "and", "or", "for", "in"
+
 ## Syntax
 
 Syntax of this PL will be similar to Python syntax
