@@ -35,6 +35,12 @@ impl Lexer {
     fn take_while(&mut self, filter: impl Fn(char) -> bool) -> Result<String, LexerError> {
         let mut chars: String = String::new();
         loop {
+            let ch = self.peek();
+            if let Some(ch) = ch {
+                if !filter(ch) {
+                    break;
+                }
+            }
             let ch = self.next_char().unwrap_or(None);
             if let Some(ch) = ch {
                 if filter(ch) {
@@ -95,9 +101,11 @@ impl Lexer {
         }
     }
 
-    fn append_token(&mut self, token: Token) {
+    fn append_token(&mut self, token: Token, add_position: Option<usize>) {
         self.tokens.push(token);
-        self.position += 1;
+        if let Some(add_position) = add_position {
+            self.position += add_position;
+        }
     }
 
     fn is_end(&self) -> bool {
@@ -110,20 +118,22 @@ impl Lexer {
 
             if let Some(ch) = ch {
                 match ch {
-                    '+' => self.append_token(Token::Plus),
-                    '-' => self.append_token(Token::Minus),
-                    '*' => self.append_token(Token::Multiply),
-                    '/' => self.append_token(Token::Divide),
-                    '=' => self.append_token(Token::Equals),
-                    '(' => self.append_token(Token::OpenParen),
-                    ')' => self.append_token(Token::CloseParen),
+                    '+' => self.append_token(Token::Plus, Some(1)),
+                    '-' => self.append_token(Token::Minus, Some(1)),
+                    '*' => self.append_token(Token::Multiply, Some(1)),
+                    '/' => self.append_token(Token::Divide, Some(1)),
+                    '=' => self.append_token(Token::Equals, Some(1)),
+                    '(' => self.append_token(Token::OpenParen, Some(1)),
+                    ')' => self.append_token(Token::CloseParen, Some(1)),
                     ch => {
                         if ch.is_digit(10) {
                             let number = self.tokenize_number()?;
-                            self.append_token(number);
+                            self.append_token(number, None);
+                            continue;
                         } else if ch.is_ascii_alphabetic() {
                             let identifier = self.tokenize_ident()?;
-                            self.append_token(identifier);
+                            self.append_token(identifier, None);
+                            continue;
                         } else {
                             bail!(LexerError::UnexpectedToken(ch.to_string()))
                         }
