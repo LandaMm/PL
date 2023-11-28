@@ -5,13 +5,14 @@ mod macros;
 
 fn main() {
     let source = "
-# functions
-def mul(a, b) {
-  x = a * b
-  return x
+if x == a and a != 0 {
+  y = x
+} else if a > 0 or a == -5 {
+  y = -x
+} else {
+  y = 0
+  y += a
 }
-
-mul(5, 10)
     ";
     let mut lexer = Lexer::new(source.to_string());
     match lexer.tokenize() {

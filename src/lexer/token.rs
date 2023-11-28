@@ -39,7 +39,7 @@ impl std::fmt::Display for LexerError {
 
 impl std::error::Error for LexerError {}
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     Identifier(String),
     Integer(usize),
@@ -64,6 +64,17 @@ pub enum Token {
     Equals,
     // Whitespace, ignore, cz whitespace is not getting used as syntax part
     Newline,
+    // Keywords
+    Def,
+    True,
+    False,
+    Return,
+    If,
+    Else,
+    And,
+    Or,
+    For,
+    In,
 }
 
 impl From<String> for Token {

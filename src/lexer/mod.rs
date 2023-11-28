@@ -180,6 +180,54 @@ impl Lexer {
                             continue;
                         } else if ch.is_ascii_alphabetic() {
                             let identifier = self.tokenize_ident()?;
+
+                            match identifier.clone() {
+                                Token::Identifier(value) => match value.as_str() {
+                                    "def" => {
+                                        self.append_token(Token::Def, None);
+                                        continue;
+                                    }
+                                    "true" => {
+                                        self.append_token(Token::True, None);
+                                        continue;
+                                    }
+                                    "false" => {
+                                        self.append_token(Token::False, None);
+                                        continue;
+                                    }
+                                    "return" => {
+                                        self.append_token(Token::Return, None);
+                                        continue;
+                                    }
+                                    "if" => {
+                                        self.append_token(Token::If, None);
+                                        continue;
+                                    }
+                                    "else" => {
+                                        self.append_token(Token::Else, None);
+                                        continue;
+                                    }
+                                    "and" => {
+                                        self.append_token(Token::And, None);
+                                        continue;
+                                    }
+                                    "or" => {
+                                        self.append_token(Token::Or, None);
+                                        continue;
+                                    }
+                                    "for" => {
+                                        self.append_token(Token::For, None);
+                                        continue;
+                                    }
+                                    "in" => {
+                                        self.append_token(Token::In, None);
+                                        continue;
+                                    }
+                                    _ => {}
+                                },
+                                _ => {}
+                            }
+
                             self.append_token(identifier, None);
                             continue;
                         } else {
