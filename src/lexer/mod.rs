@@ -101,6 +101,34 @@ impl Lexer {
         }
     }
 
+    fn parse_comment(&mut self) -> Result<(), LexerError> {
+        match self.peek() {
+            Some(ch) if ch != '#' => bail!(LexerError::UnexpectedToken(ch.to_string())),
+            None => bail!(LexerError::UnexpectedEOF),
+            _ => {}
+        }
+
+        self.take_while(|ch| ch != '\n' && ch != '\r')?;
+
+        Ok(())
+    }
+
+    fn tokenize_string_literal(&mut self) -> Result<Token, LexerError> {
+        match self.peek() {
+            Some(ch) if ch != '"' => bail!(LexerError::UnexpectedToken(ch.to_string())),
+            None => bail!(LexerError::UnexpectedEOF),
+            _ => {}
+        }
+
+        self.next_char()?; // skip '"' character
+
+        let got = self.take_while(|ch| ch != '"')?;
+
+        self.next_char()?; // skip '"' character (closing one)
+
+        Ok(Token::StringLiteral(got))
+    }
+
     fn append_token(&mut self, token: Token, add_position: Option<usize>) {
         self.tokens.push(token);
         if let Some(add_position) = add_position {
@@ -125,6 +153,26 @@ impl Lexer {
                     '=' => self.append_token(Token::Equals, Some(1)),
                     '(' => self.append_token(Token::OpenParen, Some(1)),
                     ')' => self.append_token(Token::CloseParen, Some(1)),
+                    '\n' => self.append_token(Token::Newline, Some(1)),
+                    '[' => self.append_token(Token::OpenSquareBracket, Some(1)),
+                    ']' => self.append_token(Token::CloseSquareBracket, Some(1)),
+                    '{' => self.append_token(Token::OpenCurlyBrace, Some(1)),
+                    '}' => self.append_token(Token::CloseCurlyBrace, Some(1)),
+                    ':' => self.append_token(Token::Colon, Some(1)),
+                    ',' => self.append_token(Token::Comma, Some(1)),
+                    '%' => self.append_token(Token::Modulo, Some(1)),
+                    '!' => self.append_token(Token::Not, Some(1)),
+                    '<' => self.append_token(Token::LessThan, Some(1)),
+                    '>' => self.append_token(Token::GreaterThan, Some(1)),
+                    ' ' | '\r' => {
+                        // ignore whitespaces
+                        self.position += 1;
+                    }
+                    '#' => self.parse_comment()?,
+                    '"' => {
+                        let string_literal = self.tokenize_string_literal()?;
+                        self.append_token(string_literal, None);
+                    }
                     ch => {
                         if ch.is_digit(10) {
                             let number = self.tokenize_number()?;
