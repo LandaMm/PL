@@ -2,6 +2,7 @@ use lexer::Lexer;
 
 mod lexer;
 mod macros;
+mod parser;
 
 fn main() {
     let source = "
