@@ -240,6 +240,8 @@ impl Lexer {
             }
         }
 
+        self.append_token(Token::EOF, None);
+
         Ok(())
     }
 }
