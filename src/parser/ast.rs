@@ -22,7 +22,7 @@ impl Parser {
         let mut program = Node::Program(vec![]);
 
         while self.not_eof() {
-            let stmt = self.parse_stmt()?;
+            let stmt = self.statement()?;
             if let Node::Program(ref mut stmts) = program {
                 stmts.push(Box::new(stmt));
             }
@@ -49,12 +49,12 @@ impl Parser {
         }
     }
 
-    fn parse_stmt(&mut self) -> Result<Node, ParseError> {
+    fn statement(&mut self) -> Result<Node, ParseError> {
         // skip to parse_expr
-        self.parse_expr()
+        self.expression()
     }
 
-    fn parse_expr(&mut self) -> Result<Node, ParseError> {
+    fn expression(&mut self) -> Result<Node, ParseError> {
         let mut result = self.term()?;
 
         while matches!(self.get_current_token().clone(), Token::Plus)
@@ -152,7 +152,7 @@ impl Parser {
             }
             Token::OpenParen => {
                 self.eat()?; // eat open paren
-                let expr = self.parse_expr()?;
+                let expr = self.expression()?;
                 self.eat()?; // eat close paren
                 Ok(expr)
             }
