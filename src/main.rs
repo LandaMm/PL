@@ -1,23 +1,31 @@
 use lexer::Lexer;
 
+use crate::{lexer::token::Token, parser::ast::Parser};
+
 mod lexer;
 mod macros;
 mod parser;
 
 fn main() {
     let source = "
-if x == a and a != 0 {
-  y = x
-} else if a > 0 or a == -5 {
-  y = -x
-} else {
-  y = 0
-  y += a
-}
+(fooBar - 10) * 2 / 5 % 10
     ";
     let mut lexer = Lexer::new(source.to_string());
     match lexer.tokenize() {
         Err(err) => panic!("Error: {}", err),
-        Ok(_) => println!("tokens: {:#?}", lexer.tokens),
+        Ok(_) => {
+            println!("tokens: {:#?}", lexer.tokens);
+            let mut parser = Parser::new(
+                lexer
+                    .tokens
+                    .into_iter()
+                    .filter(|tok| !matches!(tok, Token::Newline))
+                    .collect(),
+            );
+            match parser.produce_ast() {
+                Ok(program) => println!("ast: {:#?}", program),
+                Err(err) => panic!("Error while parsing: {}", err),
+            }
+        }
     }
 }
