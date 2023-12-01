@@ -223,6 +223,14 @@ impl Lexer {
                                         self.append_token(Token::In, None);
                                         continue;
                                     }
+                                    "let" => {
+                                        self.append_token(Token::Let, None);
+                                        continue;
+                                    }
+                                    "const" => {
+                                        self.append_token(Token::Const, None);
+                                        continue;
+                                    }
                                     _ => {}
                                 },
                                 _ => {}

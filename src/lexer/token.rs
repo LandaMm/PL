@@ -75,6 +75,8 @@ pub enum Token {
     Or,
     For,
     In,
+    Let,
+    Const,
     // Another required tokens for parser
     EOF, // signified the end of file.
 }
