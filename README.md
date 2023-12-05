@@ -66,6 +66,51 @@ let a
 for i in range(0, 10) {
   a = i
 }
+
+# classes
+
+class Creature {
+  init(kind) {
+    self.kind = kind
+  }
+
+  die() {
+    print("dying")
+  }
+}
+
+class Human from Creature {
+  init(age) {
+    super("human")
+    self.age = age
+  }
+
+  birthday() {
+    self.age += 1
+  }
+}
+
+class Person from Human {
+  init(name, age) {
+    super(age)
+    self.name = name
+  }
+
+  # create empty person (with no data)
+  static default() {
+    return new Person("unknown", 0)
+  }
+
+  changeName(newName) {
+    self.name = newName
+  }
+}
+
+const jeff = new Person("John", 24)
+jeff.changeName("Jeff")
+jeff.birthday()
+jeff.die()
+
 ```
 
 ## API
