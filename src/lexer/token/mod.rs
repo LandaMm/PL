@@ -16,6 +16,47 @@
 //  decimal(5.6)
 // ]
 
+pub mod character;
+pub mod decimal;
+pub mod identifier;
+pub mod integer;
+pub mod string_literal;
+
+use std::fmt::Debug;
+
+pub use character::*;
+pub use decimal::*;
+pub use identifier::*;
+pub use integer::*;
+pub use string_literal::*;
+
+pub trait Token {
+    fn kind(&self) -> TokenKind;
+    fn line(&self) -> usize;
+    fn column(&self) -> usize;
+
+    fn set_line(&mut self, value: usize);
+    fn set_column(&mut self, value: usize);
+}
+
+impl Debug for dyn Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Token({:?}, {}:{})",
+            self.kind(),
+            self.line(),
+            self.column()
+        )
+    }
+}
+
+pub struct SimpleToken {
+    pub kind: TokenKind,
+    pub line: usize,
+    pub column: usize,
+}
+
 #[derive(Debug)]
 pub enum LexerError {
     UnexpectedToken(String),
@@ -39,12 +80,12 @@ impl std::fmt::Display for LexerError {
 
 impl std::error::Error for LexerError {}
 
-#[derive(Debug, PartialEq, Clone)]
-pub enum Tokens {
-    Identifier(String),
-    Integer(usize),
-    Decimal(f64),
-    StringLiteral(String),
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum TokenKind {
+    Identifier,
+    Integer,
+    Decimal,
+    StringLiteral,
     Plus,
     Minus,
     OpenParen,

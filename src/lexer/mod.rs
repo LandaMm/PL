@@ -1,12 +1,16 @@
 use crate::macros::bail;
 
-use self::token::{LexerError, Tokens};
+use self::token::{
+    Character, Decimal, Identifier, Integer, LexerError, StringLiteral, Token, TokenKind,
+};
 
 pub mod token;
 
 pub struct Lexer {
-    pub tokens: Vec<Tokens>,
+    pub tokens: Vec<Box<dyn Token>>,
     position: usize,
+    line: usize,
+    column: usize,
     source: String,
 }
 
@@ -14,6 +18,8 @@ impl Lexer {
     pub fn new(source: String) -> Self {
         Self {
             position: 0,
+            line: 1,
+            column: 0,
             tokens: vec![],
             source,
         }
@@ -25,6 +31,14 @@ impl Lexer {
         }
         let last_position = self.position.clone();
         self.position += 1;
+        if let Some(ch) = self.source.chars().nth(last_position) {
+            if ch != '\n' {
+                self.column += 1;
+            } else {
+                self.line += 1;
+                self.column = 0;
+            }
+        }
         return Ok(self.source.chars().nth(last_position));
     }
 
@@ -55,7 +69,7 @@ impl Lexer {
         Ok(chars)
     }
 
-    fn tokenize_ident(&mut self) -> Result<Tokens, LexerError> {
+    fn tokenize_ident(&mut self) -> Result<Identifier, LexerError> {
         // identifiers can't start with a number
         match self.peek() {
             Some(ch) if ch.is_digit(10) => bail!(LexerError::UnexpectedToken(ch.to_string())),
@@ -63,19 +77,26 @@ impl Lexer {
             _ => {}
         }
 
+        let line = self.line;
+        let column = self.column;
         let got = self.take_while(|ch| ch == '_' || ch.is_ascii_alphabetic() || ch.is_digit(10))?;
 
-        let tok = Tokens::Identifier(got);
+        let mut tok = Identifier::from(got);
+        tok.set_line(line);
+        tok.set_column(column);
         Ok(tok)
     }
 
-    fn tokenize_number(&mut self) -> Result<Tokens, LexerError> {
+    fn tokenize_number(&mut self) -> Result<Box<dyn Token>, LexerError> {
         // number should start with a digit
         match self.peek() {
             Some(ch) if !ch.is_digit(10) => bail!(LexerError::UnexpectedToken(ch.to_string())),
             None => bail!(LexerError::UnexpectedEOF),
             _ => {}
         }
+
+        let line = self.line;
+        let column = self.column;
 
         let got = self.take_while(|ch| ch.is_digit(10) || ch == '.')?;
 
@@ -90,14 +111,22 @@ impl Lexer {
                 Err(_) => bail!(LexerError::ParseNumberError(got)),
             };
 
-            return Ok(Tokens::Decimal(value));
+            let mut token = Decimal::from(value);
+            token.set_line(line);
+            token.set_column(column);
+
+            return Ok(Box::new(token));
         } else {
             let value: usize = match got.parse() {
                 Ok(num) => num,
                 Err(_) => bail!(LexerError::ParseNumberError(got)),
             };
 
-            return Ok(Tokens::Integer(value));
+            let mut token = Integer::from(value);
+            token.set_line(line);
+            token.set_column(column);
+
+            return Ok(Box::new(token));
         }
     }
 
@@ -113,12 +142,15 @@ impl Lexer {
         Ok(())
     }
 
-    fn tokenize_string_literal(&mut self) -> Result<Tokens, LexerError> {
+    fn tokenize_string_literal(&mut self) -> Result<Box<dyn Token>, LexerError> {
         match self.peek() {
             Some(ch) if ch != '"' => bail!(LexerError::UnexpectedToken(ch.to_string())),
             None => bail!(LexerError::UnexpectedEOF),
             _ => {}
         }
+
+        let line = self.line;
+        let column = self.column;
 
         self.next_char()?; // skip '"' character
 
@@ -126,14 +158,31 @@ impl Lexer {
 
         self.next_char()?; // skip '"' character (closing one)
 
-        Ok(Tokens::StringLiteral(got))
+        let mut token = StringLiteral::from(got);
+        token.line = line;
+        token.column = column;
+
+        Ok(Box::new(token))
     }
 
-    fn append_token(&mut self, token: Tokens, add_position: Option<usize>) {
-        self.tokens.push(token);
+    fn append_token(&mut self, mut token: Box<dyn Token>, add_position: Option<usize>) {
+        let token_kind = token.kind();
+        println!("token_kind: {:?}", token_kind);
         if let Some(add_position) = add_position {
             self.position += add_position;
+            token.as_mut().set_line(self.line);
+            token.as_mut().set_column(self.column);
+            match token_kind {
+                TokenKind::Newline => {
+                    self.line += 1;
+                    self.column = 0;
+                }
+                _ => {
+                    self.column += 1;
+                }
+            }
         }
+        self.tokens.push(token);
     }
 
     fn is_end(&self) -> bool {
@@ -146,27 +195,53 @@ impl Lexer {
 
             if let Some(ch) = ch {
                 match ch {
-                    '+' => self.append_token(Tokens::Plus, Some(1)),
-                    '-' => self.append_token(Tokens::Minus, Some(1)),
-                    '*' => self.append_token(Tokens::Multiply, Some(1)),
-                    '/' => self.append_token(Tokens::Divide, Some(1)),
-                    '=' => self.append_token(Tokens::Equals, Some(1)),
-                    '(' => self.append_token(Tokens::OpenParen, Some(1)),
-                    ')' => self.append_token(Tokens::CloseParen, Some(1)),
-                    '\n' => self.append_token(Tokens::Newline, Some(1)),
-                    '[' => self.append_token(Tokens::OpenSquareBracket, Some(1)),
-                    ']' => self.append_token(Tokens::CloseSquareBracket, Some(1)),
-                    '{' => self.append_token(Tokens::OpenCurlyBrace, Some(1)),
-                    '}' => self.append_token(Tokens::CloseCurlyBrace, Some(1)),
-                    ':' => self.append_token(Tokens::Colon, Some(1)),
-                    ',' => self.append_token(Tokens::Comma, Some(1)),
-                    '%' => self.append_token(Tokens::Modulo, Some(1)),
-                    '!' => self.append_token(Tokens::Not, Some(1)),
-                    '<' => self.append_token(Tokens::LessThan, Some(1)),
-                    '>' => self.append_token(Tokens::GreaterThan, Some(1)),
+                    '+' => self.append_token(Box::new(Character::from(TokenKind::Plus)), Some(1)),
+                    '-' => self.append_token(Box::new(Character::from(TokenKind::Minus)), Some(1)),
+                    '*' => {
+                        self.append_token(Box::new(Character::from(TokenKind::Multiply)), Some(1))
+                    }
+                    '/' => self.append_token(Box::new(Character::from(TokenKind::Divide)), Some(1)),
+                    '=' => self.append_token(Box::new(Character::from(TokenKind::Equals)), Some(1)),
+                    '(' => {
+                        self.append_token(Box::new(Character::from(TokenKind::OpenParen)), Some(1))
+                    }
+                    ')' => {
+                        self.append_token(Box::new(Character::from(TokenKind::CloseParen)), Some(1))
+                    }
+                    '\n' => {
+                        self.append_token(Box::new(Character::from(TokenKind::Newline)), Some(1))
+                    }
+                    '[' => self.append_token(
+                        Box::new(Character::from(TokenKind::OpenSquareBracket)),
+                        Some(1),
+                    ),
+                    ']' => self.append_token(
+                        Box::new(Character::from(TokenKind::CloseSquareBracket)),
+                        Some(1),
+                    ),
+                    '{' => self.append_token(
+                        Box::new(Character::from(TokenKind::OpenCurlyBrace)),
+                        Some(1),
+                    ),
+                    '}' => self.append_token(
+                        Box::new(Character::from(TokenKind::CloseCurlyBrace)),
+                        Some(1),
+                    ),
+                    ':' => self.append_token(Box::new(Character::from(TokenKind::Colon)), Some(1)),
+                    ',' => self.append_token(Box::new(Character::from(TokenKind::Comma)), Some(1)),
+                    '%' => self.append_token(Box::new(Character::from(TokenKind::Modulo)), Some(1)),
+                    '!' => self.append_token(Box::new(Character::from(TokenKind::Not)), Some(1)),
+                    '<' => {
+                        self.append_token(Box::new(Character::from(TokenKind::LessThan)), Some(1))
+                    }
+                    '>' => self
+                        .append_token(Box::new(Character::from(TokenKind::GreaterThan)), Some(1)),
                     ' ' | '\r' => {
                         // ignore whitespaces
                         self.position += 1;
+                        if ch.to_string().chars().count() > 0 {
+                            self.column += 1;
+                        }
                     }
                     '#' => self.parse_comment()?,
                     '"' => {
@@ -181,62 +256,96 @@ impl Lexer {
                         } else if ch.is_ascii_alphabetic() {
                             let identifier = self.tokenize_ident()?;
 
-                            match identifier.clone() {
-                                Tokens::Identifier(value) => match value.as_str() {
-                                    "def" => {
-                                        self.append_token(Tokens::Def, None);
-                                        continue;
-                                    }
-                                    "true" => {
-                                        self.append_token(Tokens::True, None);
-                                        continue;
-                                    }
-                                    "false" => {
-                                        self.append_token(Tokens::False, None);
-                                        continue;
-                                    }
-                                    "return" => {
-                                        self.append_token(Tokens::Return, None);
-                                        continue;
-                                    }
-                                    "if" => {
-                                        self.append_token(Tokens::If, None);
-                                        continue;
-                                    }
-                                    "else" => {
-                                        self.append_token(Tokens::Else, None);
-                                        continue;
-                                    }
-                                    "and" => {
-                                        self.append_token(Tokens::And, None);
-                                        continue;
-                                    }
-                                    "or" => {
-                                        self.append_token(Tokens::Or, None);
-                                        continue;
-                                    }
-                                    "for" => {
-                                        self.append_token(Tokens::For, None);
-                                        continue;
-                                    }
-                                    "in" => {
-                                        self.append_token(Tokens::In, None);
-                                        continue;
-                                    }
-                                    "let" => {
-                                        self.append_token(Tokens::Let, None);
-                                        continue;
-                                    }
-                                    "const" => {
-                                        self.append_token(Tokens::Const, None);
-                                        continue;
-                                    }
-                                    _ => {}
-                                },
+                            let value = identifier.value();
+                            match value.as_str() {
+                                "def" => {
+                                    self.append_token(
+                                        Box::new(Character::from(TokenKind::Def)),
+                                        None,
+                                    );
+                                    continue;
+                                }
+                                "true" => {
+                                    self.append_token(
+                                        Box::new(Character::from(TokenKind::True)),
+                                        None,
+                                    );
+                                    continue;
+                                }
+                                "false" => {
+                                    self.append_token(
+                                        Box::new(Character::from(TokenKind::False)),
+                                        None,
+                                    );
+                                    continue;
+                                }
+                                "return" => {
+                                    self.append_token(
+                                        Box::new(Character::from(TokenKind::Return)),
+                                        None,
+                                    );
+                                    continue;
+                                }
+                                "if" => {
+                                    self.append_token(
+                                        Box::new(Character::from(TokenKind::If)),
+                                        None,
+                                    );
+                                    continue;
+                                }
+                                "else" => {
+                                    self.append_token(
+                                        Box::new(Character::from(TokenKind::Else)),
+                                        None,
+                                    );
+                                    continue;
+                                }
+                                "and" => {
+                                    self.append_token(
+                                        Box::new(Character::from(TokenKind::And)),
+                                        None,
+                                    );
+                                    continue;
+                                }
+                                "or" => {
+                                    self.append_token(
+                                        Box::new(Character::from(TokenKind::Or)),
+                                        None,
+                                    );
+                                    continue;
+                                }
+                                "for" => {
+                                    self.append_token(
+                                        Box::new(Character::from(TokenKind::For)),
+                                        None,
+                                    );
+                                    continue;
+                                }
+                                "in" => {
+                                    self.append_token(
+                                        Box::new(Character::from(TokenKind::In)),
+                                        None,
+                                    );
+                                    continue;
+                                }
+                                "let" => {
+                                    self.append_token(
+                                        Box::new(Character::from(TokenKind::Let)),
+                                        None,
+                                    );
+                                    continue;
+                                }
+                                "const" => {
+                                    self.append_token(
+                                        Box::new(Character::from(TokenKind::Const)),
+                                        None,
+                                    );
+                                    continue;
+                                }
                                 _ => {}
-                            }
+                            };
 
-                            self.append_token(identifier, None);
+                            self.append_token(Box::new(identifier), None);
                             continue;
                         } else {
                             bail!(LexerError::UnexpectedToken(ch.to_string()))
@@ -248,7 +357,12 @@ impl Lexer {
             }
         }
 
-        self.append_token(Tokens::EOF, None);
+        let mut eof_token = Character::from(TokenKind::EOF);
+
+        eof_token.set_line(self.line);
+        eof_token.set_column(self.column);
+
+        self.append_token(Box::new(eof_token), None);
 
         Ok(())
     }
