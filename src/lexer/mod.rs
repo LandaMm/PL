@@ -167,7 +167,6 @@ impl Lexer {
 
     fn append_token(&mut self, mut token: Box<dyn Token>, add_position: Option<usize>) {
         let token_kind = token.kind();
-        println!("token_kind: {:?}", token_kind);
         if let Some(add_position) = add_position {
             self.position += add_position;
             token.as_mut().set_line(self.line);
@@ -228,6 +227,7 @@ impl Lexer {
                         Some(1),
                     ),
                     ':' => self.append_token(Box::new(Character::from(TokenKind::Colon)), Some(1)),
+                    '.' => self.append_token(Box::new(Character::from(TokenKind::Point)), Some(1)),
                     ',' => self.append_token(Box::new(Character::from(TokenKind::Comma)), Some(1)),
                     '%' => self.append_token(Box::new(Character::from(TokenKind::Modulo)), Some(1)),
                     '!' => self.append_token(Box::new(Character::from(TokenKind::Not)), Some(1)),
@@ -259,87 +259,101 @@ impl Lexer {
                             let value = identifier.value();
                             match value.as_str() {
                                 "def" => {
-                                    self.append_token(
-                                        Box::new(Character::from(TokenKind::Def)),
-                                        None,
-                                    );
+                                    let mut token = Character::from(TokenKind::Def);
+                                    token.set_line(identifier.line());
+                                    token.set_column(identifier.column());
+                                    self.append_token(Box::new(token), None);
                                     continue;
                                 }
                                 "true" => {
-                                    self.append_token(
-                                        Box::new(Character::from(TokenKind::True)),
-                                        None,
-                                    );
+                                    let mut token = Character::from(TokenKind::True);
+                                    token.set_line(identifier.line());
+                                    token.set_column(identifier.column());
+                                    self.append_token(Box::new(token), None);
                                     continue;
                                 }
                                 "false" => {
-                                    self.append_token(
-                                        Box::new(Character::from(TokenKind::False)),
-                                        None,
-                                    );
+                                    let mut token = Character::from(TokenKind::False);
+                                    token.set_line(identifier.line());
+                                    token.set_column(identifier.column());
+                                    self.append_token(Box::new(token), None);
                                     continue;
                                 }
                                 "return" => {
-                                    self.append_token(
-                                        Box::new(Character::from(TokenKind::Return)),
-                                        None,
-                                    );
+                                    let mut token = Character::from(TokenKind::Return);
+                                    token.set_line(identifier.line());
+                                    token.set_column(identifier.column());
+                                    self.append_token(Box::new(token), None);
                                     continue;
                                 }
                                 "if" => {
-                                    self.append_token(
-                                        Box::new(Character::from(TokenKind::If)),
-                                        None,
-                                    );
+                                    let mut token = Character::from(TokenKind::If);
+                                    token.set_line(identifier.line());
+                                    token.set_column(identifier.column());
+                                    self.append_token(Box::new(token), None);
                                     continue;
                                 }
                                 "else" => {
-                                    self.append_token(
-                                        Box::new(Character::from(TokenKind::Else)),
-                                        None,
-                                    );
+                                    let mut token = Character::from(TokenKind::Else);
+                                    token.set_line(identifier.line());
+                                    token.set_column(identifier.column());
+                                    self.append_token(Box::new(token), None);
                                     continue;
                                 }
                                 "and" => {
-                                    self.append_token(
-                                        Box::new(Character::from(TokenKind::And)),
-                                        None,
-                                    );
+                                    let mut token = Character::from(TokenKind::And);
+                                    token.set_line(identifier.line());
+                                    token.set_column(identifier.column());
+                                    self.append_token(Box::new(token), None);
                                     continue;
                                 }
                                 "or" => {
-                                    self.append_token(
-                                        Box::new(Character::from(TokenKind::Or)),
-                                        None,
-                                    );
+                                    let mut token = Character::from(TokenKind::Or);
+                                    token.set_line(identifier.line());
+                                    token.set_column(identifier.column());
+                                    self.append_token(Box::new(token), None);
                                     continue;
                                 }
                                 "for" => {
-                                    self.append_token(
-                                        Box::new(Character::from(TokenKind::For)),
-                                        None,
-                                    );
+                                    let mut token = Character::from(TokenKind::For);
+                                    token.set_line(identifier.line());
+                                    token.set_column(identifier.column());
+                                    self.append_token(Box::new(token), None);
                                     continue;
                                 }
                                 "in" => {
-                                    self.append_token(
-                                        Box::new(Character::from(TokenKind::In)),
-                                        None,
-                                    );
+                                    let mut token = Character::from(TokenKind::In);
+                                    token.set_line(identifier.line());
+                                    token.set_column(identifier.column());
+                                    self.append_token(Box::new(token), None);
                                     continue;
                                 }
                                 "let" => {
-                                    self.append_token(
-                                        Box::new(Character::from(TokenKind::Let)),
-                                        None,
-                                    );
+                                    let mut token = Character::from(TokenKind::Let);
+                                    token.set_line(identifier.line());
+                                    token.set_column(identifier.column());
+                                    self.append_token(Box::new(token), None);
                                     continue;
                                 }
                                 "const" => {
-                                    self.append_token(
-                                        Box::new(Character::from(TokenKind::Const)),
-                                        None,
-                                    );
+                                    let mut token = Character::from(TokenKind::Const);
+                                    token.set_line(identifier.line());
+                                    token.set_column(identifier.column());
+                                    self.append_token(Box::new(token), None);
+                                    continue;
+                                }
+                                "class" => {
+                                    let mut token = Character::from(TokenKind::Class);
+                                    token.set_line(identifier.line());
+                                    token.set_column(identifier.column());
+                                    self.append_token(Box::new(token), None);
+                                    continue;
+                                }
+                                "from" => {
+                                    let mut token = Character::from(TokenKind::From);
+                                    token.set_line(identifier.line());
+                                    token.set_column(identifier.column());
+                                    self.append_token(Box::new(token), None);
                                     continue;
                                 }
                                 _ => {}

@@ -96,6 +96,7 @@ pub enum TokenKind {
     CloseCurlyBrace,
     Colon,
     Comma,
+    Point,
     Multiply,
     Divide,
     Modulo,
@@ -118,6 +119,8 @@ pub enum TokenKind {
     In,
     Let,
     Const,
+    Class,
+    From,
     // Another required tokens for parser
     EOF, // signified the end of file.
 }
