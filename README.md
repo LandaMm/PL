@@ -8,20 +8,26 @@ Syntax of this PL will be similar to Python syntax
 
 ```python
 # variables and base types
-num = 45 # integer
-floating_num = 403.54 # float
-my_string = "Hello world!" # string
-shop_list = ["Carrot", "Apple", "Milk"] # list
-my_obj = { "name": "John", "age": 23 } # object
-is_adult = true # boolean
+let num = 45 # integer
+let floating_num = 403.54 # float
+let my_string = "Hello world!" # string
+let shop_list = ["Carrot", "Apple", "Milk"] # list
+let my_obj = { "name": "John", "age": 23 } # object
+let is_adult = true # boolean
+
+# constants
+const PI = 3.1415
+const IS_DARWIN = False
+
+const browserWindow = null
 
 # basic operations
-y = 5 + 10 - (3 * 10) - (50 / 10)
+let y = 5 + 10 - (3 * 10) - (50 / 10)
 y += 56
 y -= 12
 y *= 5
 y /= 10
-a = 21 % 10    # a = 1
+let a = 21 % 10    # a = 1
 
 # functions
 def mul(a, b) {
@@ -29,9 +35,12 @@ def mul(a, b) {
   return x
 }
 
-val = mul(3, 10)   # 30
+let val = mul(3, 10)   # 30
 
 # if-else statement
+let y
+let t
+
 if x == a and a != 0 {
   y = x
 } else if a > 0 or a == -5 {
@@ -51,6 +60,8 @@ if is_true {
 for i in ["first", "second", "third"] {
   y = i
 }
+
+let a
 
 for i in range(0, 10) {
   a = i
@@ -73,7 +84,7 @@ Example of using wheels tail with WheelsAPI:
 import WheelsAPI.*
 import timer
 
-wheels = Wheels.get()
+const wheels = Wheels.get()
 
 def drive_forward(secs) {
   wheels.speed = 50
