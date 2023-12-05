@@ -1,10 +1,10 @@
 use lexer::Lexer;
 
-use crate::{lexer::token::Tokens, parser::ast::Parser};
+// use crate::lexer::token::TokenKind;
 
 mod lexer;
 mod macros;
-mod parser;
+// mod parser;
 
 fn main() {
     let source = "
@@ -15,17 +15,17 @@ fn main() {
         Err(err) => panic!("Error: {}", err),
         Ok(_) => {
             println!("tokens: {:#?}", lexer.tokens);
-            let mut parser = Parser::new(
-                lexer
-                    .tokens
-                    .into_iter()
-                    .filter(|tok| !matches!(tok, Tokens::Newline))
-                    .collect(),
-            );
-            match parser.produce_ast() {
-                Ok(program) => println!("ast: {:#?}", program),
-                Err(err) => panic!("Error while parsing: {}", err),
-            }
+            // let mut parser = Parser::new(
+            //     lexer
+            //         .tokens
+            //         .into_iter()
+            //         .filter(|tok| !matches!(tok, TokenKind::Newline))
+            //         .collect(),
+            // );
+            // match parser.produce_ast() {
+            //     Ok(program) => println!("ast: {:#?}", program),
+            //     Err(err) => panic!("Error while parsing: {}", err),
+            // }
         }
     }
 }
