@@ -1,8 +1,8 @@
-use crate::lexer::token::Token;
+use crate::lexer::token::Tokens;
 
 #[derive(Debug)]
 pub enum ParseError {
-    UnexpectedToken(Token),
+    UnexpectedToken(Tokens),
     UnexpectedEOF,
 }
 

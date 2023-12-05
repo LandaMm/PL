@@ -40,7 +40,7 @@ impl std::fmt::Display for LexerError {
 impl std::error::Error for LexerError {}
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum Token {
+pub enum Tokens {
     Identifier(String),
     Integer(usize),
     Decimal(f64),
@@ -79,28 +79,4 @@ pub enum Token {
     Const,
     // Another required tokens for parser
     EOF, // signified the end of file.
-}
-
-impl From<String> for Token {
-    fn from(other: String) -> Self {
-        Token::Identifier(other.to_string())
-    }
-}
-
-impl<'a> From<&'a str> for Token {
-    fn from(other: &'a str) -> Self {
-        Token::Identifier(other.to_string())
-    }
-}
-
-impl From<usize> for Token {
-    fn from(other: usize) -> Self {
-        Token::Integer(other)
-    }
-}
-
-impl From<f64> for Token {
-    fn from(other: f64) -> Self {
-        Token::Decimal(other)
-    }
 }

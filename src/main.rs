@@ -1,6 +1,6 @@
 use lexer::Lexer;
 
-use crate::{lexer::token::Token, parser::ast::Parser};
+use crate::{lexer::token::Tokens, parser::ast::Parser};
 
 mod lexer;
 mod macros;
@@ -19,7 +19,7 @@ fn main() {
                 lexer
                     .tokens
                     .into_iter()
-                    .filter(|tok| !matches!(tok, Token::Newline))
+                    .filter(|tok| !matches!(tok, Tokens::Newline))
                     .collect(),
             );
             match parser.produce_ast() {
