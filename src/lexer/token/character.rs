@@ -1,5 +1,6 @@
 use super::{Token, TokenKind};
 
+#[derive(Clone)]
 pub struct Character {
     pub kind: TokenKind,
     pub line: usize,

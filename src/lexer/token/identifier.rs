@@ -1,5 +1,6 @@
 use super::{Token, TokenKind};
 
+#[derive(Debug, Clone)]
 pub struct Identifier {
     pub kind: TokenKind,
     pub line: usize,

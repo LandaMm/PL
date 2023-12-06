@@ -26,11 +26,12 @@ use std::fmt::Debug;
 
 pub use character::*;
 pub use decimal::*;
+use dyn_clone::DynClone;
 pub use identifier::*;
 pub use integer::*;
 pub use string_literal::*;
 
-pub trait Token {
+pub trait Token: DynClone {
     fn kind(&self) -> TokenKind;
     fn line(&self) -> usize;
     fn column(&self) -> usize;
@@ -49,12 +50,6 @@ impl Debug for dyn Token {
             self.column()
         )
     }
-}
-
-pub struct SimpleToken {
-    pub kind: TokenKind,
-    pub line: usize,
-    pub column: usize,
 }
 
 #[derive(Debug)]

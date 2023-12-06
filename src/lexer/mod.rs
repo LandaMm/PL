@@ -169,8 +169,8 @@ impl Lexer {
         let token_kind = token.kind();
         if let Some(add_position) = add_position {
             self.position += add_position;
-            token.as_mut().set_line(self.line);
-            token.as_mut().set_column(self.column);
+            token.set_line(self.line);
+            token.set_column(self.column);
             match token_kind {
                 TokenKind::Newline => {
                     self.line += 1;
