@@ -16,13 +16,13 @@
 //  decimal(5.6)
 // ]
 
-pub mod character;
-pub mod decimal;
-pub mod identifier;
-pub mod integer;
-pub mod string_literal;
+mod character;
+mod decimal;
+mod identifier;
+mod integer;
+mod string_literal;
 
-use std::fmt::Debug;
+use std::{any::Any, fmt::Debug};
 
 pub use character::*;
 pub use decimal::*;
@@ -38,6 +38,8 @@ pub trait Token: DynClone {
 
     fn set_line(&mut self, value: usize);
     fn set_column(&mut self, value: usize);
+
+    fn into_any(self: Box<Self>) -> Box<dyn Any>;
 }
 
 impl Debug for dyn Token {

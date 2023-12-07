@@ -28,6 +28,10 @@ impl Token for Integer {
     fn set_column(&mut self, value: usize) {
         self.column = value;
     }
+
+    fn into_any(self: Box<Self>) -> Box<dyn std::any::Any> {
+        self
+    }
 }
 
 impl Integer {
