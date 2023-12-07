@@ -2,6 +2,10 @@
 
 This parser is used for parsing game code and get low-level instructions for game objects in game
 
+## TODO
+
+provide struct like in rust but in PL
+
 ## Syntax
 
 Syntax of this PL will be similar to Python syntax
