@@ -7,7 +7,7 @@ use std::any::Any;
 
 use super::{
     error::ParseError,
-    nodes::{BinaryOperator, Node},
+    nodes::{BinaryOperator, LogicalOperator, Node},
 };
 
 pub struct Parser {
@@ -72,8 +72,71 @@ impl Parser {
     fn statement(&mut self) -> Result<Node, ParseError> {
         match self.get_current_token()?.kind() {
             TokenKind::Let | TokenKind::Const => self.variable_declaration(),
-            _ => self.expression(),
+            TokenKind::Def => self.function_declaration(),
+            TokenKind::If => self.if_statement(),
+            _ => self.binary_expression(),
         }
+    }
+
+    fn function_declaration(&mut self) -> Result<Node, ParseError> {
+        self.eat(TokenKind::Def)?;
+
+        let id = Box::new(self.identifier()?);
+
+        self.eat(TokenKind::OpenParen)?;
+
+        let mut params: Vec<Box<Node>> = vec![];
+
+        while self.get_current_token()?.kind() != TokenKind::CloseParen {
+            params.push(Box::new(self.identifier()?));
+        }
+
+        self.eat(TokenKind::CloseParen)?;
+
+        let body = Box::new(self.block_statement()?);
+
+        Ok(Node::FunctionDeclaration(id, params, body))
+    }
+
+    fn block_statement(&mut self) -> Result<Node, ParseError> {
+        self.eat(TokenKind::OpenCurlyBrace)?;
+
+        let mut statements: Vec<Box<Node>> = vec![];
+
+        while self.get_current_token()?.kind() != TokenKind::CloseCurlyBrace {
+            statements.push(Box::new(self.statement()?));
+        }
+
+        self.eat(TokenKind::CloseCurlyBrace)?;
+
+        Ok(Node::BlockStatement(statements))
+    }
+
+    fn if_statement(&mut self) -> Result<Node, ParseError> {
+        self.eat(TokenKind::If)?;
+
+        let condition = self.binary_expression()?;
+
+        let consequent = self.block_statement()?;
+
+        let mut alternate: Option<Box<Node>> = None;
+
+        if self.get_current_token()?.kind() == TokenKind::Else {
+            self.eat(TokenKind::Else)?;
+
+            if self.get_current_token()?.kind() == TokenKind::If {
+                alternate = Some(Box::new(self.if_statement()?));
+            } else {
+                let block = self.block_statement()?;
+                alternate = Some(Box::new(block));
+            }
+        }
+
+        Ok(Node::IfStatement(
+            Box::new(condition),
+            Box::new(consequent),
+            alternate,
+        ))
     }
 
     fn variable_declaration(&mut self) -> Result<Node, ParseError> {
@@ -100,7 +163,7 @@ impl Parser {
         // check if we have some value to assign
         if self.get_current_token()?.kind() == TokenKind::Equals {
             self.eat(TokenKind::Equals)?;
-            let value = self.expression()?;
+            let value = self.binary_expression()?;
             Ok(Node::VariableDeclaration(
                 identifier.value(),
                 Some(Box::new(value)),
@@ -124,8 +187,69 @@ impl Parser {
         }
     }
 
-    fn expression(&mut self) -> Result<Node, ParseError> {
-        let mut result = self.term()?;
+    fn binary_expression(&mut self) -> Result<Node, ParseError> {
+        let mut result = self.additive_expression()?;
+
+        while self.get_current_token()?.kind() == TokenKind::LessThan
+            || self.get_current_token()?.kind() == TokenKind::GreaterThan
+        // TODO: provide support for IsEquals when such token will exist
+        {
+            let token = self.eat(self.get_current_token()?.kind())?;
+
+            match token.kind() {
+                TokenKind::LessThan => {
+                    let right = self.additive_expression()?;
+                    result = Node::BinaryExpression(
+                        Box::new(result),
+                        BinaryOperator::LessThan,
+                        Box::new(right),
+                    );
+                }
+                TokenKind::GreaterThan => {
+                    let right = self.additive_expression()?;
+                    result = Node::BinaryExpression(
+                        Box::new(result),
+                        BinaryOperator::GreaterThan,
+                        Box::new(right),
+                    );
+                }
+                _ => {}
+            }
+        }
+
+        // check if it logical expressions, e.g. we have && as current token
+        // TODO: add IsEquals and NotEquals when such tokens will exist
+        while self.get_current_token()?.kind() == TokenKind::And
+            || self.get_current_token()?.kind() == TokenKind::Or
+        {
+            let token = self.eat(self.get_current_token()?.kind())?;
+
+            match token.kind() {
+                TokenKind::And => {
+                    let right = self.binary_expression()?;
+                    result = Node::LogicalExpression(
+                        Box::new(result),
+                        LogicalOperator::And,
+                        Box::new(right),
+                    );
+                }
+                TokenKind::Or => {
+                    let right = self.binary_expression()?;
+                    result = Node::LogicalExpression(
+                        Box::new(result),
+                        LogicalOperator::Or,
+                        Box::new(right),
+                    );
+                }
+                _ => {}
+            }
+        }
+
+        Ok(result)
+    }
+
+    fn additive_expression(&mut self) -> Result<Node, ParseError> {
+        let mut result = self.multiplicative_expression()?;
         println!("expression got term: {:?}", result);
 
         let mut token = self.get_current_token()?;
@@ -140,7 +264,7 @@ impl Parser {
             match token_kind {
                 TokenKind::Plus => {
                     self.eat(TokenKind::Plus)?;
-                    let right = self.term()?;
+                    let right = self.multiplicative_expression()?;
                     println!("plus.right: {:?}", right);
 
                     result = Node::BinaryExpression(
@@ -151,7 +275,7 @@ impl Parser {
                 }
                 TokenKind::Minus => {
                     self.eat(TokenKind::Minus)?;
-                    let right = self.term()?;
+                    let right = self.multiplicative_expression()?;
                     println!("minus.right: {:?}", right);
 
                     result = Node::BinaryExpression(
@@ -171,7 +295,7 @@ impl Parser {
         Ok(result)
     }
 
-    fn term(&mut self) -> Result<Node, ParseError> {
+    fn multiplicative_expression(&mut self) -> Result<Node, ParseError> {
         let mut left = self.factor()?;
 
         let mut current_token = self.get_current_token()?;
@@ -228,6 +352,21 @@ impl Parser {
         Ok(left)
     }
 
+    fn identifier(&mut self) -> Result<Node, ParseError> {
+        let identifier = self.eat(TokenKind::Identifier)?;
+        let identifier_clone = dyn_clone::clone_box(&**identifier);
+        let token: Box<dyn Any> = identifier_clone.into_any();
+
+        match token.downcast_ref::<Identifier>() {
+            Some(identifier) => return Ok(Node::Identifier(identifier.value())),
+            None => bail!(ParseError::UnexpectedToken(
+                identifier.kind(),
+                identifier.line(),
+                identifier.column()
+            )),
+        }
+    }
+
     fn factor(&mut self) -> Result<Node, ParseError> {
         let current_token = self.get_current_token()?;
 
@@ -239,13 +378,7 @@ impl Parser {
         let token: Box<dyn Any> = curr_token_clone.into_any();
 
         match token_kind {
-            TokenKind::Identifier => {
-                if let Some(identifier) = token.downcast_ref::<Identifier>() {
-                    self.eat(TokenKind::Identifier)?;
-                    return Ok(Node::Identifier(identifier.value()));
-                }
-                bail!(ParseError::UnexpectedToken(token_kind, line, column))
-            }
+            TokenKind::Identifier => self.identifier(),
             TokenKind::Integer => {
                 if let Some(integer) = token.downcast_ref::<Integer>() {
                     self.eat(TokenKind::Integer)?;
@@ -270,11 +403,11 @@ impl Parser {
             TokenKind::OpenSquareBracket => {
                 self.eat(TokenKind::OpenSquareBracket)?;
 
-                let mut items: Vec<Box<Node>> = vec![Box::new(self.expression()?)];
+                let mut items: Vec<Box<Node>> = vec![Box::new(self.binary_expression()?)];
 
                 while self.get_current_token()?.kind() == TokenKind::Comma {
                     self.eat(TokenKind::Comma)?;
-                    let item = Box::new(self.expression()?);
+                    let item = Box::new(self.binary_expression()?);
                     items.push(item);
                 }
 
@@ -282,12 +415,14 @@ impl Parser {
 
                 Ok(Node::ArrayExpression(items))
             }
-            TokenKind::OpenCurlyBrace => {
-                self.eat(TokenKind::OpenCurlyBrace)?;
+            TokenKind::True | TokenKind::False => {
+                self.eat(token_kind)?;
+
+                Ok(Node::BoolLiteral(token_kind == TokenKind::True))
             }
             TokenKind::OpenParen => {
                 self.eat(TokenKind::OpenParen)?; // eat open paren
-                let expr = self.expression()?;
+                let expr = self.binary_expression()?;
                 self.eat(TokenKind::CloseParen)?; // eat close paren
                 return Ok(expr);
             }
