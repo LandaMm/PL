@@ -228,7 +228,6 @@ impl Parser {
         }
 
         // check if it logical expressions, e.g. we have && as current token
-        // TODO: add IsEquals and NotEquals when such tokens will exist
         while self.get_current_token()?.kind() == TokenKind::And
             || self.get_current_token()?.kind() == TokenKind::Or
         {
