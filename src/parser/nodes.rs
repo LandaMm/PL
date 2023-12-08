@@ -7,7 +7,6 @@ pub enum BinaryOperator {
     Modulo,
     LessThan,
     GreaterThan,
-    // TODO: use it when IsEquals (==) token will exist
     IsEquals,
 }
 
