@@ -49,6 +49,10 @@ impl Parser {
         }
     }
 
+    // fn peek(&self) -> Option<&Box<dyn Token>> {
+    //     self.tokens.get(self.position + 1)
+    // }
+
     fn eat(&mut self, kind: TokenKind) -> Result<&Box<dyn Token>, ParseError> {
         let token = self.tokens.get(self.position);
         self.position += 1;
@@ -74,8 +78,18 @@ impl Parser {
             TokenKind::Let | TokenKind::Const => self.variable_declaration(),
             TokenKind::Def => self.function_declaration(),
             TokenKind::If => self.if_statement(),
-            _ => self.binary_expression(),
+            TokenKind::For => self.for_statement(),
+            TokenKind::Return => self.return_statement(),
+            _ => self.expression(),
         }
+    }
+
+    fn return_statement(&mut self) -> Result<Node, ParseError> {
+        self.eat(TokenKind::Return)?;
+
+        let value = self.expression()?;
+
+        Ok(Node::ReturnStatement(Box::new(value)))
     }
 
     fn function_declaration(&mut self) -> Result<Node, ParseError> {
@@ -83,19 +97,15 @@ impl Parser {
 
         let id = Box::new(self.identifier()?);
 
-        self.eat(TokenKind::OpenParen)?;
-
-        let mut params: Vec<Box<Node>> = vec![];
-
-        while self.get_current_token()?.kind() != TokenKind::CloseParen {
-            params.push(Box::new(self.identifier()?));
-        }
-
-        self.eat(TokenKind::CloseParen)?;
+        let args = self.arguments()?;
 
         let body = Box::new(self.block_statement()?);
 
-        Ok(Node::FunctionDeclaration(id, params, body))
+        Ok(Node::FunctionDeclaration(
+            id,
+            args.into_iter().map(|x| Box::new(x)).collect(),
+            body,
+        ))
     }
 
     fn block_statement(&mut self) -> Result<Node, ParseError> {
@@ -115,7 +125,7 @@ impl Parser {
     fn if_statement(&mut self) -> Result<Node, ParseError> {
         self.eat(TokenKind::If)?;
 
-        let condition = self.binary_expression()?;
+        let condition = self.expression()?;
 
         let consequent = self.block_statement()?;
 
@@ -163,7 +173,7 @@ impl Parser {
         // check if we have some value to assign
         if self.get_current_token()?.kind() == TokenKind::Equals {
             self.eat(TokenKind::Equals)?;
-            let value = self.binary_expression()?;
+            let value = self.expression()?;
             Ok(Node::VariableDeclaration(
                 identifier.value(),
                 Some(Box::new(value)),
@@ -187,7 +197,75 @@ impl Parser {
         }
     }
 
-    fn binary_expression(&mut self) -> Result<Node, ParseError> {
+    fn for_statement(&mut self) -> Result<Node, ParseError> {
+        self.eat(TokenKind::For)?;
+
+        let left = self.expression()?;
+
+        // TODO: add support for other type of for loops (if will be required)
+        self.eat(TokenKind::In)?;
+
+        let right = self.expression()?;
+
+        let body = self.block_statement()?;
+
+        Ok(Node::ForInStatement(
+            Box::new(left),
+            Box::new(right),
+            Box::new(body),
+        ))
+    }
+
+    fn expression(&mut self) -> Result<Node, ParseError> {
+        self.assignment_expression()
+    }
+
+    fn assignment_expression(&mut self) -> Result<Node, ParseError> {
+        let left = self.logical_expression()?;
+
+        if self.get_current_token()?.kind() == TokenKind::Equals {
+            self.eat(TokenKind::Equals)?;
+            let value = self.assignment_expression()?;
+            return Ok(Node::AssignmentExpression(Box::new(left), Box::new(value)));
+        }
+
+        Ok(left)
+    }
+
+    fn logical_expression(&mut self) -> Result<Node, ParseError> {
+        let mut result = self.condition_expression()?;
+
+        // check if it logical expressions, e.g. we have && as current token
+        while self.get_current_token()?.kind() == TokenKind::And
+            || self.get_current_token()?.kind() == TokenKind::Or
+        {
+            let token = self.eat(self.get_current_token()?.kind())?;
+
+            match token.kind() {
+                TokenKind::And => {
+                    let right = self.expression()?;
+                    result = Node::LogicalExpression(
+                        Box::new(result),
+                        LogicalOperator::And,
+                        Box::new(right),
+                    );
+                }
+                TokenKind::Or => {
+                    let right = self.expression()?;
+                    result = Node::LogicalExpression(
+                        Box::new(result),
+                        LogicalOperator::Or,
+                        Box::new(right),
+                    );
+                }
+                _ => {}
+            }
+        }
+
+        Ok(result)
+    }
+
+    fn condition_expression(&mut self) -> Result<Node, ParseError> {
         let mut result = self.additive_expression()?;
 
         while self.get_current_token()?.kind() == TokenKind::LessThan
@@ -234,34 +312,58 @@ impl Parser {
             }
         }
 
-        // check if it logical expressions, e.g. we have && as current token
-        while self.get_current_token()?.kind() == TokenKind::And
-            || self.get_current_token()?.kind() == TokenKind::Or
-        {
-            let token = self.eat(self.get_current_token()?.kind())?;
-
-            match token.kind() {
-                TokenKind::And => {
-                    let right = self.binary_expression()?;
-                    result = Node::LogicalExpression(
-                        Box::new(result),
-                        LogicalOperator::And,
-                        Box::new(right),
-                    );
-                }
-                TokenKind::Or => {
-                    let right = self.binary_expression()?;
-                    result = Node::LogicalExpression(
-                        Box::new(result),
-                        LogicalOperator::Or,
-                        Box::new(right),
-                    );
-                }
-                _ => {}
-            }
-        }
-
         Ok(result)
+    }
+
+    fn unary_expression(&mut self) -> Result<Node, ParseError> {
+        let token = self.get_current_token()?;
+
+        let operator = match token.kind() {
+            TokenKind::Increment => {
+                self.eat(TokenKind::Increment)?;
+                UnaryOperator::Increment
+            }
+            TokenKind::Decrement => {
+                self.eat(TokenKind::Decrement)?;
+                UnaryOperator::Decrement
+            }
+            TokenKind::Plus => {
+                self.eat(TokenKind::Plus)?;
+                UnaryOperator::Plus
+            }
+            TokenKind::Minus => {
+                self.eat(TokenKind::Minus)?;
+                UnaryOperator::Minus
+            }
+            TokenKind::Not => {
+                self.eat(TokenKind::Not)?;
+                UnaryOperator::Negation
+            }
+            kind => bail!(ParseError::UnexpectedToken(
+                kind,
+                token.line(),
+                token.column()
+            )),
+        };
+
+        let node = self.primary_expression()?;
+
+        Ok(Node::UnaryExpression(Box::new(node), operator))
+    }
+
+    fn identifier(&mut self) -> Result<Node, ParseError> {
+        let identifier = self.eat(TokenKind::Identifier)?;
+        let identifier_clone = dyn_clone::clone_box(&**identifier);
+        let token: Box<dyn Any> = identifier_clone.into_any();
+
+        match token.downcast_ref::<Identifier>() {
+            Some(identifier) => return Ok(Node::Identifier(identifier.value())),
+            None => bail!(ParseError::UnexpectedToken(
+                identifier.kind(),
+                identifier.line(),
+                identifier.column()
+            )),
+        }
     }
 
     fn additive_expression(&mut self) -> Result<Node, ParseError> {
@@ -312,7 +414,7 @@ impl Parser {
     }
 
     fn multiplicative_expression(&mut self) -> Result<Node, ParseError> {
-        let mut left = self.factor()?;
+        let mut left = self.call_member_expression()?;
 
         let mut current_token = self.get_current_token()?;
         let mut token_kind = current_token.kind().clone();
@@ -328,7 +430,7 @@ impl Parser {
             match token_kind {
                 TokenKind::Multiply => {
                     self.eat(TokenKind::Multiply)?;
-                    let right = self.factor()?;
+                    let right = self.primary_expression()?;
 
                     left = Node::BinaryExpression(
                         Box::new(left),
@@ -339,7 +441,7 @@ impl Parser {
                 TokenKind::Divide => {
                     println!("term.divide.eating divide");
                     self.eat(TokenKind::Divide)?;
-                    let right = self.factor()?;
+                    let right = self.primary_expression()?;
                     println!("term.divide.new_right: {:?}", right);
 
                     left = Node::BinaryExpression(
@@ -350,7 +452,7 @@ impl Parser {
                 }
                 TokenKind::Modulo => {
                     self.eat(TokenKind::Modulo)?;
-                    let right = self.factor()?;
+                    let right = self.primary_expression()?;
 
                     left = Node::BinaryExpression(
                         Box::new(left),
@@ -368,58 +470,88 @@ impl Parser {
         Ok(left)
     }
 
-    fn identifier(&mut self) -> Result<Node, ParseError> {
-        let identifier = self.eat(TokenKind::Identifier)?;
-        let identifier_clone = dyn_clone::clone_box(&**identifier);
-        let token: Box<dyn Any> = identifier_clone.into_any();
+    fn call_member_expression(&mut self) -> Result<Node, ParseError> {
+        let member = self.member_expression()?;
 
-        match token.downcast_ref::<Identifier>() {
-            Some(identifier) => return Ok(Node::Identifier(identifier.value())),
-            None => bail!(ParseError::UnexpectedToken(
-                identifier.kind(),
-                identifier.line(),
-                identifier.column()
-            )),
+        if self.get_current_token()?.kind() == TokenKind::OpenParen {
+            return Ok(self.call_expression(member)?);
         }
+
+        Ok(member)
     }
 
-    fn unary_expression(&mut self) -> Result<Node, ParseError> {
-        let token = self.get_current_token()?;
+    fn call_expression(&mut self, callee: Node) -> Result<Node, ParseError> {
+        let args = self.arguments()?;
+        let mut result = Node::CallExpression(
+            Box::new(callee),
+            args.into_iter().map(|arg| Box::new(arg)).collect(),
+        );
 
-        let operator = match token.kind() {
-            TokenKind::Increment => {
-                self.eat(TokenKind::Increment)?;
-                UnaryOperator::Increment
-            }
-            TokenKind::Decrement => {
-                self.eat(TokenKind::Decrement)?;
-                UnaryOperator::Decrement
-            }
-            TokenKind::Plus => {
-                self.eat(TokenKind::Plus)?;
-                UnaryOperator::Plus
-            }
-            TokenKind::Minus => {
-                self.eat(TokenKind::Minus)?;
-                UnaryOperator::Minus
-            }
-            TokenKind::Not => {
-                self.eat(TokenKind::Not)?;
-                UnaryOperator::Negation
-            }
-            kind => bail!(ParseError::UnexpectedToken(
-                kind,
-                token.line(),
-                token.column()
-            )),
+        if self.get_current_token()?.kind() == TokenKind::OpenParen {
+            result = self.call_expression(result)?;
+        }
+
+        Ok(result)
+    }
+
+    fn arguments(&mut self) -> Result<Vec<Node>, ParseError> {
+        self.eat(TokenKind::OpenParen)?;
+
+        let args = if self.get_current_token()?.kind() != TokenKind::CloseParen {
+            self.arguments_list()?
+        } else {
+            vec![]
         };
+        println!("args: {:#?}", args);
 
-        let node = self.factor()?;
+        self.eat(TokenKind::CloseParen)?;
 
-        Ok(Node::UnaryExpression(Box::new(node), operator))
+        Ok(args)
     }
 
-    fn factor(&mut self) -> Result<Node, ParseError> {
+    fn arguments_list(&mut self) -> Result<Vec<Node>, ParseError> {
+        // TODO: instead of binary expression call assignment expression
+        let mut args: Vec<Node> = vec![self.expression()?];
+
+        while self.not_eof() && self.get_current_token()?.kind() == TokenKind::Comma {
+            self.eat(TokenKind::Comma)?;
+            // TODO: instead of binary expression call assignment expression
+            args.push(self.expression()?);
+        }
+
+        Ok(args)
+    }
+
+    fn member_expression(&mut self) -> Result<Node, ParseError> {
+        let mut object = self.primary_expression()?;
+
+        while self.get_current_token()?.kind() == TokenKind::Point
+            || self.get_current_token()?.kind() == TokenKind::OpenSquareBracket
+        {
+            let operator: &Box<dyn Token> = self.eat(self.get_current_token()?.kind())?;
+
+            let computed = match operator.kind() {
+                TokenKind::Point => false,
+                TokenKind::OpenSquareBracket => true,
+                _ => false,
+            };
+
+            let property = match computed {
+                true => {
+                    let node = self.expression()?;
+                    self.eat(TokenKind::CloseSquareBracket)?;
+                    node
+                }
+                false => self.identifier()?,
+            };
+
+            object = Node::MemberExpression(Box::new(object), Box::new(property), computed);
+        }
+
+        Ok(object)
+    }
+
+    fn primary_expression(&mut self) -> Result<Node, ParseError> {
         let current_token = self.get_current_token()?;
 
         let token_kind = current_token.kind().clone();
@@ -455,11 +587,11 @@ impl Parser {
             TokenKind::OpenSquareBracket => {
                 self.eat(TokenKind::OpenSquareBracket)?;
 
-                let mut items: Vec<Box<Node>> = vec![Box::new(self.binary_expression()?)];
+                let mut items: Vec<Box<Node>> = vec![Box::new(self.expression()?)];
 
                 while self.get_current_token()?.kind() == TokenKind::Comma {
                     self.eat(TokenKind::Comma)?;
-                    let item = Box::new(self.binary_expression()?);
+                    let item = Box::new(self.expression()?);
                     items.push(item);
                 }
 
@@ -474,45 +606,11 @@ impl Parser {
             }
             TokenKind::OpenParen => {
                 self.eat(TokenKind::OpenParen)?; // eat open paren
-                let expr = self.binary_expression()?;
+                let expr = self.expression()?;
                 self.eat(TokenKind::CloseParen)?; // eat close paren
                 return Ok(expr);
             }
             _ => self.unary_expression(),
         }
     }
-
-    // fn factor(&mut self) -> Result<Node, ParseError> {
-    //     let current_token = self.get_current_token()?;
-    //     let token = current_token as &dyn Any;
-
-    //     if let Some(identifier) = token.downcast_ref::<Identifier>() {
-    //         self.eat(TokenKind::Identifier);
-    //         return Ok(Node::Identifier(identifier.value()));
-    //     }
-
-    //     if let Some(integer) = token.downcast_ref::<Integer>() {
-    //         self.eat(TokenKind::Integer);
-    //         return Ok(Node::IntegerLiteral(integer.value()));
-    //     }
-
-    //     if let Some(decimal) = token.downcast_ref::<Decimal>() {
-    //         self.eat(TokenKind::Decimal);
-    //         return Ok(Node::DecimalLiteral(decimal.value()));
-    //     }
-
-    //     match current_token.kind() {
-    //         TokenKind::OpenParen => {
-    //             self.eat(TokenKind::OpenParen); // eat open paren
-    //             let expr = self.expression()?;
-    //             self.eat(TokenKind::CloseParen); // eat close paren
-    //             Ok(expr)
-    //         }
-    //         _ => bail!(ParseError::UnexpectedToken(
-    //             current_token.kind(),
-    //             current_token.line(),
-    //             current_token.column()
-    //         )),
-    //     }
-    // }
 }

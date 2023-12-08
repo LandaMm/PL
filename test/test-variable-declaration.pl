@@ -1,7 +1,14 @@
+# variables and base types
+let num = 45 # integer
+let floating_num = 403.54 # float
+let my_string = "Hello world!" # string
+let shop_list = ["Carrot", "Apple", "Milk"] # list
+# let my_obj = { "name": "John", "age": 23 } # object
+let is_adult = true # boolean
 
+# constants
+const PI = 3.1415
+const IS_DARWIN = false
 
-let something = 5
-let nothing
-const PI = 3.14
-let calculation = 80 + 100 / (43 % 5)
-let list = [5, 6]
+# TODO:
+# const browserWindow = null
