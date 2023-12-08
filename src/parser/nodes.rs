@@ -8,6 +8,7 @@ pub enum BinaryOperator {
     LessThan,
     GreaterThan,
     IsEquals,
+    NotEquals,
 }
 
 #[derive(Debug)]

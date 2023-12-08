@@ -190,11 +190,10 @@ impl Parser {
     fn binary_expression(&mut self) -> Result<Node, ParseError> {
         let mut result = self.additive_expression()?;
 
-        let kind = self.get_current_token()?.kind();
-
-        while kind == TokenKind::LessThan
-            || kind == TokenKind::GreaterThan
-            || kind == TokenKind::IsEquals
+        while self.get_current_token()?.kind() == TokenKind::LessThan
+            || self.get_current_token()?.kind() == TokenKind::GreaterThan
+            || self.get_current_token()?.kind() == TokenKind::IsEquals
+            || self.get_current_token()?.kind() == TokenKind::NotEquals
         {
             let token = self.eat(self.get_current_token()?.kind())?;
 
@@ -220,6 +219,14 @@ impl Parser {
                     result = Node::BinaryExpression(
                         Box::new(result),
                         BinaryOperator::IsEquals,
+                        Box::new(right),
+                    );
+                }
+                TokenKind::NotEquals => {
+                    let right = self.additive_expression()?;
+                    result = Node::BinaryExpression(
+                        Box::new(result),
+                        BinaryOperator::NotEquals,
                         Box::new(right),
                     );
                 }
