@@ -243,7 +243,16 @@ impl Lexer {
                     '.' => self.append_token(Box::new(Character::from(TokenKind::Point)), Some(1)),
                     ',' => self.append_token(Box::new(Character::from(TokenKind::Comma)), Some(1)),
                     '%' => self.append_token(Box::new(Character::from(TokenKind::Modulo)), Some(1)),
-                    '!' => self.append_token(Box::new(Character::from(TokenKind::Not)), Some(1)),
+                    '!' => {
+                        if self.peek_ahead().is_some_and(|next_char| next_char == '=') {
+                            self.append_token(
+                                Box::new(Character::from(TokenKind::NotEquals)),
+                                Some(2),
+                            )
+                        } else {
+                            self.append_token(Box::new(Character::from(TokenKind::Not)), Some(1))
+                        }
+                    }
                     '<' => {
                         self.append_token(Box::new(Character::from(TokenKind::LessThan)), Some(1))
                     }

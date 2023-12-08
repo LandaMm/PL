@@ -102,6 +102,7 @@ pub enum TokenKind {
     LessThan,
     Equals,
     IsEquals,
+    NotEquals,
     // Whitespace, ignore, cz whitespace is not getting used as syntax part
     Newline,
     // Keywords
