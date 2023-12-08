@@ -198,8 +198,26 @@ impl Lexer {
 
             if let Some(ch) = ch {
                 match ch {
-                    '+' => self.append_token(Box::new(Character::from(TokenKind::Plus)), Some(1)),
-                    '-' => self.append_token(Box::new(Character::from(TokenKind::Minus)), Some(1)),
+                    '+' => {
+                        if self.peek_ahead().is_some_and(|next_char| next_char == '+') {
+                            self.append_token(
+                                Box::new(Character::from(TokenKind::Increment)),
+                                Some(2),
+                            )
+                        } else {
+                            self.append_token(Box::new(Character::from(TokenKind::Plus)), Some(1))
+                        }
+                    }
+                    '-' => {
+                        if self.peek_ahead().is_some_and(|next_char| next_char == '-') {
+                            self.append_token(
+                                Box::new(Character::from(TokenKind::Decrement)),
+                                Some(2),
+                            )
+                        } else {
+                            self.append_token(Box::new(Character::from(TokenKind::Minus)), Some(1))
+                        }
+                    }
                     '*' => {
                         self.append_token(Box::new(Character::from(TokenKind::Multiply)), Some(1))
                     }

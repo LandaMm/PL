@@ -85,6 +85,8 @@ pub enum TokenKind {
     StringLiteral,
     Plus,
     Minus,
+    Increment,
+    Decrement,
     OpenParen,
     CloseParen,
     OpenSquareBracket,
