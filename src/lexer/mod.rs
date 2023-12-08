@@ -46,6 +46,10 @@ impl Lexer {
         self.source.chars().nth(self.position)
     }
 
+    fn peek_ahead(&self) -> Option<char> {
+        self.source.chars().nth(self.position + 1)
+    }
+
     fn take_while(&mut self, filter: impl Fn(char) -> bool) -> Result<String, LexerError> {
         let mut chars: String = String::new();
         loop {
@@ -200,7 +204,16 @@ impl Lexer {
                         self.append_token(Box::new(Character::from(TokenKind::Multiply)), Some(1))
                     }
                     '/' => self.append_token(Box::new(Character::from(TokenKind::Divide)), Some(1)),
-                    '=' => self.append_token(Box::new(Character::from(TokenKind::Equals)), Some(1)),
+                    '=' => {
+                        if self.peek_ahead().is_some_and(|next_char| next_char == '=') {
+                            self.append_token(
+                                Box::new(Character::from(TokenKind::IsEquals)),
+                                Some(2),
+                            )
+                        } else {
+                            self.append_token(Box::new(Character::from(TokenKind::Equals)), Some(1))
+                        }
+                    }
                     '(' => {
                         self.append_token(Box::new(Character::from(TokenKind::OpenParen)), Some(1))
                     }
