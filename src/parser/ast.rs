@@ -7,7 +7,7 @@ use std::any::Any;
 
 use super::{
     error::ParseError,
-    nodes::{BinaryOperator, LogicalOperator, Node},
+    nodes::{BinaryOperator, LogicalOperator, Node, UnaryOperator},
 };
 
 pub struct Parser {
@@ -383,6 +383,42 @@ impl Parser {
         }
     }
 
+    fn unary_expression(&mut self) -> Result<Node, ParseError> {
+        let token = self.get_current_token()?;
+
+        let operator = match token.kind() {
+            TokenKind::Increment => {
+                self.eat(TokenKind::Increment)?;
+                UnaryOperator::Increment
+            }
+            TokenKind::Decrement => {
+                self.eat(TokenKind::Decrement)?;
+                UnaryOperator::Decrement
+            }
+            TokenKind::Plus => {
+                self.eat(TokenKind::Plus)?;
+                UnaryOperator::Plus
+            }
+            TokenKind::Minus => {
+                self.eat(TokenKind::Minus)?;
+                UnaryOperator::Minus
+            }
+            TokenKind::Not => {
+                self.eat(TokenKind::Not)?;
+                UnaryOperator::Negation
+            }
+            kind => bail!(ParseError::UnexpectedToken(
+                kind,
+                token.line(),
+                token.column()
+            )),
+        };
+
+        let node = self.factor()?;
+
+        Ok(Node::UnaryExpression(Box::new(node), operator))
+    }
+
     fn factor(&mut self) -> Result<Node, ParseError> {
         let current_token = self.get_current_token()?;
 
@@ -442,7 +478,7 @@ impl Parser {
                 self.eat(TokenKind::CloseParen)?; // eat close paren
                 return Ok(expr);
             }
-            _ => bail!(ParseError::UnexpectedToken(token_kind, line, column)),
+            _ => self.unary_expression(),
         }
     }
 

@@ -20,7 +20,7 @@ fn read_file(file_path: String) -> String {
 }
 
 fn main() {
-    let source = read_file("test/test-if-statement.pl".to_string());
+    let source = read_file("test/test-expression-parser.pl".to_string());
     let mut lexer = Lexer::new(source.to_string());
     match lexer.tokenize() {
         Err(err) => panic!("Error: {}", err),

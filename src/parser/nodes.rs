@@ -18,6 +18,15 @@ pub enum LogicalOperator {
 }
 
 #[derive(Debug)]
+pub enum UnaryOperator {
+    Increment,
+    Decrement,
+    Plus,
+    Minus,
+    Negation,
+}
+
+#[derive(Debug)]
 pub enum Node {
     Program(Vec<Box<Node>>),                                   // body[]
     IntegerLiteral(usize),                                     // value
@@ -32,4 +41,5 @@ pub enum Node {
     FunctionDeclaration(Box<Node>, Vec<Box<Node>>, Box<Node>), // identifier, params, block_statement(body)
     LogicalExpression(Box<Node>, LogicalOperator, Box<Node>),  // left, operator, right
     IfStatement(Box<Node>, Box<Node>, Option<Box<Node>>), // condition, body (consequent), alternate
+    UnaryExpression(Box<Node>, UnaryOperator),            // unary target node, unary operator
 }
