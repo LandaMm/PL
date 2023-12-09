@@ -105,10 +105,15 @@ pub enum TokenKind {
     Equals,
     IsEquals,
     NotEquals,
+    Addition,
+    Subtraction,
+    Multiplication,
+    Division,
+    Modulation,
     // Whitespace, ignore, cz whitespace is not getting used as syntax part
     Newline,
     // Keywords
-    Def,
+    Fn,
     True,
     False,
     Return,
@@ -122,6 +127,7 @@ pub enum TokenKind {
     Const,
     Class,
     From,
+    Import,
     Null,
     // Another required tokens for parser
     EOF, // signified the end of file.

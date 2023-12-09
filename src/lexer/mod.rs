@@ -204,6 +204,11 @@ impl Lexer {
                                 Box::new(Character::from(TokenKind::Increment)),
                                 Some(2),
                             )
+                        } else if self.peek_ahead().is_some_and(|next_char| next_char == '=') {
+                            self.append_token(
+                                Box::new(Character::from(TokenKind::Addition)),
+                                Some(2),
+                            )
                         } else {
                             self.append_token(Box::new(Character::from(TokenKind::Plus)), Some(1))
                         }
@@ -214,14 +219,38 @@ impl Lexer {
                                 Box::new(Character::from(TokenKind::Decrement)),
                                 Some(2),
                             )
+                        } else if self.peek_ahead().is_some_and(|nc| nc == '=') {
+                            self.append_token(
+                                Box::new(Character::from(TokenKind::Subtraction)),
+                                Some(2),
+                            )
                         } else {
                             self.append_token(Box::new(Character::from(TokenKind::Minus)), Some(1))
                         }
                     }
                     '*' => {
-                        self.append_token(Box::new(Character::from(TokenKind::Multiply)), Some(1))
+                        if self.peek_ahead().is_some_and(|nc| nc == '=') {
+                            self.append_token(
+                                Box::new(Character::from(TokenKind::Multiplication)),
+                                Some(2),
+                            )
+                        } else {
+                            self.append_token(
+                                Box::new(Character::from(TokenKind::Multiply)),
+                                Some(1),
+                            )
+                        }
                     }
-                    '/' => self.append_token(Box::new(Character::from(TokenKind::Divide)), Some(1)),
+                    '/' => {
+                        if self.peek_ahead().is_some_and(|nc| nc == '=') {
+                            self.append_token(
+                                Box::new(Character::from(TokenKind::Division)),
+                                Some(2),
+                            )
+                        } else {
+                            self.append_token(Box::new(Character::from(TokenKind::Divide)), Some(1))
+                        }
+                    }
                     '=' => {
                         if self.peek_ahead().is_some_and(|next_char| next_char == '=') {
                             self.append_token(
@@ -260,7 +289,16 @@ impl Lexer {
                     ':' => self.append_token(Box::new(Character::from(TokenKind::Colon)), Some(1)),
                     '.' => self.append_token(Box::new(Character::from(TokenKind::Point)), Some(1)),
                     ',' => self.append_token(Box::new(Character::from(TokenKind::Comma)), Some(1)),
-                    '%' => self.append_token(Box::new(Character::from(TokenKind::Modulo)), Some(1)),
+                    '%' => {
+                        if self.peek_ahead().is_some_and(|nc| nc == '=') {
+                            self.append_token(
+                                Box::new(Character::from(TokenKind::Modulation)),
+                                Some(2),
+                            )
+                        } else {
+                            self.append_token(Box::new(Character::from(TokenKind::Modulo)), Some(1))
+                        }
+                    }
                     '!' => {
                         if self.peek_ahead().is_some_and(|next_char| next_char == '=') {
                             self.append_token(
@@ -298,8 +336,8 @@ impl Lexer {
 
                             let value = identifier.value();
                             match value.as_str() {
-                                "def" => {
-                                    let mut token = Character::from(TokenKind::Def);
+                                "fn" => {
+                                    let mut token = Character::from(TokenKind::Fn);
                                     token.set_line(identifier.line());
                                     token.set_column(identifier.column());
                                     self.append_token(Box::new(token), None);
@@ -398,6 +436,13 @@ impl Lexer {
                                 }
                                 "null" => {
                                     let mut token = Character::from(TokenKind::Null);
+                                    token.set_line(identifier.line());
+                                    token.set_column(identifier.column());
+                                    self.append_token(Box::new(token), None);
+                                    continue;
+                                }
+                                "import" => {
+                                    let mut token = Character::from(TokenKind::Import);
                                     token.set_line(identifier.line());
                                     token.set_column(identifier.column());
                                     self.append_token(Box::new(token), None);
@@ -720,10 +765,9 @@ mod tests {
 
     #[test]
     fn test_function() {
-        let tokens: Vec<Box<dyn Token>> =
-            tokenize_string("def test(x, y) { return x }".to_string());
+        let tokens: Vec<Box<dyn Token>> = tokenize_string("fn test(x, y) { return x }".to_string());
         let expected: Vec<TokenKind> = vec![
-            TokenKind::Def,
+            TokenKind::Fn,
             TokenKind::Identifier,
             TokenKind::OpenParen,
             TokenKind::Identifier,
@@ -773,6 +817,18 @@ mod tests {
         assert!(tokens
             .get(0)
             .is_some_and(|token| token.kind() == TokenKind::Null));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_keyword_import() {
+        let tokens = tokenize_string("import".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::Import));
         assert!(tokens
             .get(1)
             .is_some_and(|token| token.kind() == TokenKind::EOF));
