@@ -73,38 +73,44 @@ for i in range(0, 10) {
 # classes
 
 class Creature {
-  init(kind) {
+  kind = "unknown"
+
+  fn init(kind) {
     self.kind = kind
   }
 
-  die() {
+  fn die() {
     print("dying")
   }
 }
 
 class Human from Creature {
-  init(age) {
+  age = 1
+
+  fn init(age) {
     super("human")
     self.age = age
   }
 
-  birthday() {
+  fn birthday() {
     self.age += 1
   }
 }
 
 class Person from Human {
-  init(name, age) {
+  name = null
+
+  fn init(name, age) {
     super(age)
     self.name = name
   }
 
   # create empty person (with no data)
-  static default() {
+  static fn default() {
     return new Person("unknown", 0)
   }
 
-  changeName(newName) {
+  fn changeName(newName) {
     self.name = newName
   }
 }
