@@ -127,6 +127,7 @@ pub enum TokenKind {
     Const,
     Class,
     From,
+    Static,
     Import,
     Null,
     // Another required tokens for parser
