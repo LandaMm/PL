@@ -396,6 +396,13 @@ impl Lexer {
                                     self.append_token(Box::new(token), None);
                                     continue;
                                 }
+                                "null" => {
+                                    let mut token = Character::from(TokenKind::Null);
+                                    token.set_line(identifier.line());
+                                    token.set_column(identifier.column());
+                                    self.append_token(Box::new(token), None);
+                                    continue;
+                                }
                                 _ => {}
                             };
 
@@ -754,6 +761,18 @@ mod tests {
         assert!(tokens
             .get(0)
             .is_some_and(|token| token.kind() == TokenKind::False));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_keyword_null() {
+        let tokens = tokenize_string("null".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::Null));
         assert!(tokens
             .get(1)
             .is_some_and(|token| token.kind() == TokenKind::EOF));
