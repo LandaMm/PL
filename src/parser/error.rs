@@ -11,7 +11,7 @@ impl std::fmt::Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ParseError::UnexpectedToken(kind, line, column) => {
-                println!("{:?} {}:{}", kind, line, column);
+                // println!("{:?} {}:{}", kind, line, column);
                 // TODO: add support for showing token value
                 write!(
                     f,
