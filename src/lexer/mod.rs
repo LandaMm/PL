@@ -421,3 +421,423 @@ impl Lexer {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn tokenize_string(source: String) -> Vec<Box<dyn Token>> {
+        let mut lexer = Lexer::new(source.clone());
+        if lexer.tokenize().is_err() {
+            panic!("Failed to tokenize source: {}", source);
+        } else {
+            return lexer.tokens;
+        }
+    }
+
+    #[test]
+    fn test_plus() {
+        let tokens = tokenize_string("+".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::Plus));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_minus() {
+        let tokens = tokenize_string("-".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::Minus));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_increment() {
+        let tokens = tokenize_string("++".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::Increment));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_decrement() {
+        let tokens = tokenize_string("--".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::Decrement));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_open_paren() {
+        let tokens = tokenize_string("(".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::OpenParen));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_close_paren() {
+        let tokens = tokenize_string(")".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::CloseParen));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_open_bracket() {
+        let tokens = tokenize_string("[".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::OpenSquareBracket));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_close_bracket() {
+        let tokens = tokenize_string("]".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::CloseSquareBracket));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_open_brace() {
+        let tokens = tokenize_string("{".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::OpenCurlyBrace));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_close_brace() {
+        let tokens = tokenize_string("}".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::CloseCurlyBrace));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_colon() {
+        let tokens = tokenize_string(":".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::Colon));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_comma() {
+        let tokens = tokenize_string(",".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::Comma));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_point() {
+        let tokens = tokenize_string(".".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::Point));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_multiply() {
+        let tokens = tokenize_string("*".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::Multiply));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_divide() {
+        let tokens = tokenize_string("/".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::Divide));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_modulo() {
+        let tokens = tokenize_string("%".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::Modulo));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_not() {
+        let tokens = tokenize_string("!".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::Not));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_greater_than() {
+        let tokens = tokenize_string(">".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::GreaterThan));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_less_than() {
+        let tokens = tokenize_string("<".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::LessThan));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_equals() {
+        let tokens = tokenize_string("=".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::Equals));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_is_equals() {
+        let tokens = tokenize_string("==".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::IsEquals));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_not_equals() {
+        let tokens = tokenize_string("!=".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::NotEquals));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_newline() {
+        let tokens = tokenize_string("\n".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::Newline));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_function() {
+        let tokens: Vec<Box<dyn Token>> =
+            tokenize_string("def test(x, y) { return x }".to_string());
+        let expected: Vec<TokenKind> = vec![
+            TokenKind::Def,
+            TokenKind::Identifier,
+            TokenKind::OpenParen,
+            TokenKind::Identifier,
+            TokenKind::Comma,
+            TokenKind::Identifier,
+            TokenKind::CloseParen,
+            TokenKind::OpenCurlyBrace,
+            TokenKind::Return,
+            TokenKind::Identifier,
+            TokenKind::CloseCurlyBrace,
+            TokenKind::EOF,
+        ];
+        assert_eq!(tokens.len(), expected.len());
+        for (i, token) in tokens.iter().enumerate() {
+            assert_eq!(token.kind(), *expected.get(i).unwrap())
+        }
+    }
+
+    #[test]
+    fn test_keyword_true() {
+        let tokens = tokenize_string("true".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::True));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_keyword_false() {
+        let tokens = tokenize_string("false".to_string());
+        assert_eq!(tokens.len(), 2);
+        assert!(tokens
+            .get(0)
+            .is_some_and(|token| token.kind() == TokenKind::False));
+        assert!(tokens
+            .get(1)
+            .is_some_and(|token| token.kind() == TokenKind::EOF));
+    }
+
+    #[test]
+    fn test_if_statement() {
+        let tokens: Vec<Box<dyn Token>> = tokenize_string(
+            "if true and 5 or 0 { something } else if { alternate } else { anything }".to_string(),
+        );
+        let expected: Vec<TokenKind> = vec![
+            TokenKind::If,
+            TokenKind::True,
+            TokenKind::And,
+            TokenKind::Integer,
+            TokenKind::Or,
+            TokenKind::Integer,
+            TokenKind::OpenCurlyBrace,
+            TokenKind::Identifier,
+            TokenKind::CloseCurlyBrace,
+            TokenKind::Else,
+            TokenKind::If,
+            TokenKind::OpenCurlyBrace,
+            TokenKind::Identifier,
+            TokenKind::CloseCurlyBrace,
+            TokenKind::Else,
+            TokenKind::OpenCurlyBrace,
+            TokenKind::Identifier,
+            TokenKind::CloseCurlyBrace,
+            TokenKind::EOF,
+        ];
+        assert_eq!(tokens.len(), expected.len());
+        for (i, token) in tokens.iter().enumerate() {
+            assert_eq!(token.kind(), *expected.get(i).unwrap())
+        }
+    }
+
+    #[test]
+    fn test_for_loop() {
+        let tokens: Vec<Box<dyn Token>> =
+            tokenize_string("for i in [1, 2, 3] { print(i) }".to_string());
+        let expected: Vec<TokenKind> = vec![
+            TokenKind::For,
+            TokenKind::Identifier,
+            TokenKind::In,
+            TokenKind::OpenSquareBracket,
+            TokenKind::Integer,
+            TokenKind::Comma,
+            TokenKind::Integer,
+            TokenKind::Comma,
+            TokenKind::Integer,
+            TokenKind::CloseSquareBracket,
+            TokenKind::OpenCurlyBrace,
+            TokenKind::Identifier,
+            TokenKind::OpenParen,
+            TokenKind::Identifier,
+            TokenKind::CloseParen,
+            TokenKind::CloseCurlyBrace,
+            TokenKind::EOF,
+        ];
+        assert_eq!(tokens.len(), expected.len());
+        for (i, token) in tokens.iter().enumerate() {
+            assert_eq!(token.kind(), *expected.get(i).unwrap())
+        }
+    }
+
+    #[test]
+    fn test_variable() {
+        let tokens: Vec<Box<dyn Token>> = tokenize_string("let x = 5\nconst PI = 3.14".to_string());
+        let expected: Vec<TokenKind> = vec![
+            TokenKind::Let,
+            TokenKind::Identifier,
+            TokenKind::Equals,
+            TokenKind::Integer,
+            TokenKind::Newline,
+            TokenKind::Const,
+            TokenKind::Identifier,
+            TokenKind::Equals,
+            TokenKind::Decimal,
+            TokenKind::EOF,
+        ];
+        assert_eq!(tokens.len(), expected.len());
+        for (i, token) in tokens.iter().enumerate() {
+            assert_eq!(token.kind(), *expected.get(i).unwrap())
+        }
+    }
+}
