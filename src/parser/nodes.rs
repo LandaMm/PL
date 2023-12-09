@@ -46,6 +46,7 @@ pub enum Node {
     IfStatement(Box<Node>, Box<Node>, Option<Box<Node>>), // condition, body (consequent), alternate
     ForInStatement(Box<Node>, Box<Node>, Box<Node>),      // left, right, body[] (block_statement)
     ReturnStatement(Box<Node>),                           // value
+    ImportStatement(Box<Node>),                           // import entity
 
     // literals
     IntegerLiteral(usize), // value
