@@ -49,9 +49,9 @@ impl Parser {
         }
     }
 
-    // fn peek(&self) -> Option<&Box<dyn Token>> {
-    //     self.tokens.get(self.position + 1)
-    // }
+    fn peek(&self) -> Option<&Box<dyn Token>> {
+        self.tokens.get(self.position + 1)
+    }
 
     fn eat(&mut self, kind: TokenKind) -> Result<&Box<dyn Token>, ParseError> {
         let token = self.tokens.get(self.position);
@@ -81,8 +81,102 @@ impl Parser {
             TokenKind::For => self.for_statement(),
             TokenKind::Return => self.return_statement(),
             TokenKind::Import => self.import_statement(),
+            TokenKind::Class => self.class_declaration(),
             _ => self.expression(),
         }
+    }
+
+    fn class_declaration(&mut self) -> Result<Node, ParseError> {
+        self.eat(TokenKind::Class)?;
+
+        let class_name = self.identifier()?;
+
+        let super_class: Option<Box<Node>> = match self.get_current_token()?.kind() {
+            TokenKind::From => {
+                self.eat(TokenKind::From)?;
+                Some(Box::new(self.identifier()?))
+            }
+            _ => None,
+        };
+
+        self.eat(TokenKind::OpenCurlyBrace)?;
+
+        let mut body: Vec<Box<Node>> = vec![];
+
+        while self.get_current_token()?.kind() != TokenKind::CloseCurlyBrace {
+            let statement = self.class_statement()?;
+            body.push(Box::new(statement));
+        }
+
+        self.eat(TokenKind::CloseCurlyBrace)?;
+
+        Ok(Node::ClassDeclaration(
+            Box::new(class_name),
+            super_class,
+            body,
+        ))
+    }
+
+    fn class_statement(&mut self) -> Result<Node, ParseError> {
+        match self.get_current_token()?.kind() {
+            TokenKind::Identifier => return Ok(self.class_property_definition()?),
+            TokenKind::Fn => return Ok(self.class_method_definition()?),
+            TokenKind::Static => match self.peek() {
+                Some(token) => match token.kind() {
+                    TokenKind::Identifier => return Ok(self.class_property_definition()?),
+                    TokenKind::Fn => return Ok(self.class_method_definition()?),
+                    kind => bail!(ParseError::UnexpectedToken(
+                        kind,
+                        token.line(),
+                        token.column()
+                    )),
+                },
+                None => bail!(ParseError::UnexpectedEOF),
+            },
+            kind => bail!(ParseError::UnexpectedToken(
+                kind,
+                self.get_current_token()?.line(),
+                self.get_current_token()?.column()
+            )),
+        }
+    }
+
+    fn class_property_definition(&mut self) -> Result<Node, ParseError> {
+        let is_static = match self.get_current_token()?.kind() {
+            TokenKind::Static => true,
+            _ => false,
+        };
+        if is_static {
+            self.eat(TokenKind::Static)?;
+        }
+        let id = self.identifier()?;
+        self.eat(TokenKind::Equals)?;
+        let value = self.expression()?;
+        Ok(Node::PropertyDefinition(
+            Box::new(id),
+            Box::new(value),
+            is_static,
+        ))
+    }
+
+    fn class_method_definition(&mut self) -> Result<Node, ParseError> {
+        let is_static = match self.get_current_token()?.kind() {
+            TokenKind::Static => true,
+            _ => false,
+        };
+        if is_static {
+            self.eat(TokenKind::Static)?;
+        }
+        self.eat(TokenKind::Fn)?;
+        let id = self.identifier()?;
+        let args = self.arguments()?;
+        let block = self.block_statement()?;
+        Ok(Node::MethodDefinition(
+            Box::new(id),
+            args.into_iter().map(|x| Box::new(x)).collect(),
+            Box::new(block),
+            is_static,
+        ))
     }
 
     fn return_statement(&mut self) -> Result<Node, ParseError> {
