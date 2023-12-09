@@ -27,6 +27,16 @@ pub enum UnaryOperator {
 }
 
 #[derive(Debug)]
+pub enum AssignmentOperator {
+    Equals,
+    Addition,
+    Subtraction,
+    Multiplication,
+    Division,
+    Modulation,
+}
+
+#[derive(Debug)]
 pub enum Node {
     // statements
     Program(Vec<Box<Node>>),                                   // body[]
@@ -52,5 +62,5 @@ pub enum Node {
     UnaryExpression(Box<Node>, UnaryOperator),              // unary target node, unary operator
     MemberExpression(Box<Node>, Box<Node>, bool),           // object, property, computed
     CallExpression(Box<Node>, Vec<Box<Node>>),              // callee, arguments
-    AssignmentExpression(Box<Node>, Box<Node>),             // assigne, value
+    AssignmentExpression(Box<Node>, AssignmentOperator, Box<Node>), // assigne, operator, value
 }

@@ -7,7 +7,7 @@ use std::any::Any;
 
 use super::{
     error::ParseError,
-    nodes::{BinaryOperator, LogicalOperator, Node, UnaryOperator},
+    nodes::{AssignmentOperator, BinaryOperator, LogicalOperator, Node, UnaryOperator},
 };
 
 pub struct Parser {
@@ -49,9 +49,9 @@ impl Parser {
         }
     }
 
-    // fn peek(&self) -> Option<&Box<dyn Token>> {
-    //     self.tokens.get(self.position + 1)
-    // }
+    fn peek(&self) -> Option<&Box<dyn Token>> {
+        self.tokens.get(self.position + 1)
+    }
 
     fn eat(&mut self, kind: TokenKind) -> Result<&Box<dyn Token>, ParseError> {
         let token = self.tokens.get(self.position);
@@ -221,15 +221,74 @@ impl Parser {
     }
 
     fn assignment_expression(&mut self) -> Result<Node, ParseError> {
-        let left = self.logical_expression()?;
+        let save_position = self.position;
+        let left = self.primary_expression()?;
 
-        if self.get_current_token()?.kind() == TokenKind::Equals {
-            self.eat(TokenKind::Equals)?;
-            let value = self.assignment_expression()?;
-            return Ok(Node::AssignmentExpression(Box::new(left), Box::new(value)));
+        let kind = self.get_current_token()?.kind();
+        let line = self.get_current_token()?.line();
+        let column = self.get_current_token()?.column();
+
+        println!("kind: {:?}, not_eof: {:?}", kind, self.not_eof());
+
+        if let Some(nt) = self.peek() {
+            println!("peek: {:?}", nt);
         }
 
-        Ok(left)
+        if kind == TokenKind::Equals
+            || ((kind == TokenKind::Plus
+                || kind == TokenKind::Minus
+                || kind == TokenKind::Multiply
+                || kind == TokenKind::Divide
+                || kind == TokenKind::Modulo)
+                && self.not_eof()
+                && self
+                    .peek()
+                    .is_some_and(|token| token.kind() == TokenKind::Equals))
+        {
+            println!("it's assignment expression!");
+            let operator = match kind {
+                TokenKind::Equals => {
+                    self.eat(TokenKind::Equals)?;
+                    AssignmentOperator::Equals
+                }
+                TokenKind::Plus => {
+                    self.eat(TokenKind::Plus)?;
+                    self.eat(TokenKind::Equals)?;
+                    AssignmentOperator::Addition
+                }
+                TokenKind::Minus => {
+                    self.eat(TokenKind::Minus)?;
+                    self.eat(TokenKind::Equals)?;
+                    AssignmentOperator::Subtraction
+                }
+                TokenKind::Multiply => {
+                    self.eat(TokenKind::Multiply)?;
+                    self.eat(TokenKind::Equals)?;
+                    AssignmentOperator::Multiplication
+                }
+                TokenKind::Divide => {
+                    self.eat(TokenKind::Divide)?;
+                    self.eat(TokenKind::Equals)?;
+                    AssignmentOperator::Division
+                }
+                TokenKind::Modulo => {
+                    self.eat(TokenKind::Modulo)?;
+                    self.eat(TokenKind::Equals)?;
+                    AssignmentOperator::Modulation
+                }
+                _ => bail!(ParseError::UnexpectedToken(kind, line, column)),
+            };
+            let value = self.expression()?;
+            return Ok(Node::AssignmentExpression(
+                Box::new(left),
+                operator,
+                Box::new(value),
+            ));
+        } else {
+            self.position = save_position;
+        }
+
+        Ok(self.logical_expression()?)
     }
 
     fn logical_expression(&mut self) -> Result<Node, ParseError> {
