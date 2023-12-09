@@ -4,7 +4,7 @@ use lexer::Lexer;
 
 use crate::{
     lexer::token::{Token, TokenKind},
-    parser::ast::Parser,
+    parser::Parser,
 };
 
 // use crate::lexer::token::TokenKind;
