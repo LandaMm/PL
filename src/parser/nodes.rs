@@ -43,6 +43,7 @@ pub enum Node {
     Identifier(String),    // value
     StringLiteral(String), // value
     BoolLiteral(bool),     // value
+    NullLiteral(),         // nothing, cz it's null
 
     // expressions
     BinaryExpression(Box<Node>, BinaryOperator, Box<Node>), // left, operator, right
