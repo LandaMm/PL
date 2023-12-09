@@ -27,14 +27,11 @@ fn main() {
         Ordering::Greater => args.get(1).unwrap(),
     };
 
-    println!("filename: {}", filename);
-
     let source = read_file(filename.to_string());
     let mut lexer = Lexer::new(source.to_string());
     match lexer.tokenize() {
         Err(err) => panic!("Error: {}", err),
         Ok(_) => {
-            println!("tokens: {:#?}", lexer.tokens);
             let with_no_newline: Vec<Box<dyn Token>> = lexer
                 .tokens
                 .into_iter()
