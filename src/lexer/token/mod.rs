@@ -122,6 +122,7 @@ pub enum TokenKind {
     Const,
     Class,
     From,
+    Null,
     // Another required tokens for parser
     EOF, // signified the end of file.
 }
