@@ -1,4 +1,4 @@
-use std::fs;
+use std::{cmp::Ordering, env, fs};
 
 use lexer::Lexer;
 
@@ -20,7 +20,16 @@ fn read_file(file_path: String) -> String {
 }
 
 fn main() {
-    let source = read_file("test/test-assignment-expression.pl".to_string());
+    let args: Vec<String> = env::args().collect();
+
+    let filename = match args.len().cmp(&1) {
+        Ordering::Equal | Ordering::Less => "test/test-assignment-expression.pl",
+        Ordering::Greater => args.get(1).unwrap(),
+    };
+
+    println!("filename: {}", filename);
+
+    let source = read_file(filename.to_string());
     let mut lexer = Lexer::new(source.to_string());
     match lexer.tokenize() {
         Err(err) => panic!("Error: {}", err),
