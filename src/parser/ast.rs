@@ -368,12 +368,9 @@ impl Parser {
 
     fn additive_expression(&mut self) -> Result<Node, ParseError> {
         let mut result = self.multiplicative_expression()?;
-        println!("expression got term: {:?}", result);
 
         let mut token = self.get_current_token()?;
-        println!("token: {:?}", token);
         let mut token_kind = token.kind().clone();
-        println!("token_kind: {:?}", token_kind);
 
         while token_kind == TokenKind::Plus || token_kind == TokenKind::Minus {
             let line = token.line().clone();
@@ -383,7 +380,6 @@ impl Parser {
                 TokenKind::Plus => {
                     self.eat(TokenKind::Plus)?;
                     let right = self.multiplicative_expression()?;
-                    println!("plus.right: {:?}", right);
 
                     result = Node::BinaryExpression(
                         Box::new(result),
@@ -394,7 +390,6 @@ impl Parser {
                 TokenKind::Minus => {
                     self.eat(TokenKind::Minus)?;
                     let right = self.multiplicative_expression()?;
-                    println!("minus.right: {:?}", right);
 
                     result = Node::BinaryExpression(
                         Box::new(result),
@@ -405,9 +400,7 @@ impl Parser {
                 _ => bail!(ParseError::UnexpectedToken(token_kind, line, column)),
             }
             token = self.get_current_token()?;
-            println!("new token: {:?}", token);
             token_kind = token.kind().clone();
-            println!("new token_kind: {:?}", token_kind);
         }
 
         Ok(result)
@@ -425,7 +418,6 @@ impl Parser {
         {
             let line = current_token.line().clone();
             let column = current_token.column().clone();
-            println!("term.token_kind: {:?}", token_kind);
 
             match token_kind {
                 TokenKind::Multiply => {
@@ -439,10 +431,8 @@ impl Parser {
                     );
                 }
                 TokenKind::Divide => {
-                    println!("term.divide.eating divide");
                     self.eat(TokenKind::Divide)?;
                     let right = self.primary_expression()?;
-                    println!("term.divide.new_right: {:?}", right);
 
                     left = Node::BinaryExpression(
                         Box::new(left),
@@ -502,7 +492,6 @@ impl Parser {
         } else {
             vec![]
         };
-        println!("args: {:#?}", args);
 
         self.eat(TokenKind::CloseParen)?;
 
@@ -510,12 +499,10 @@ impl Parser {
     }
 
     fn arguments_list(&mut self) -> Result<Vec<Node>, ParseError> {
-        // TODO: instead of binary expression call assignment expression
         let mut args: Vec<Node> = vec![self.expression()?];
 
         while self.not_eof() && self.get_current_token()?.kind() == TokenKind::Comma {
             self.eat(TokenKind::Comma)?;
-            // TODO: instead of binary expression call assignment expression
             args.push(self.expression()?);
         }
 
@@ -576,6 +563,10 @@ impl Parser {
                     return Ok(Node::DecimalLiteral(decimal.value()));
                 }
                 bail!(ParseError::UnexpectedToken(token_kind, line, column))
+            }
+            TokenKind::Null => {
+                self.eat(TokenKind::Null)?;
+                return Ok(Node::NullLiteral());
             }
             TokenKind::StringLiteral => {
                 if let Some(string_literal) = token.downcast_ref::<StringLiteral>() {
