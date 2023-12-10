@@ -29,7 +29,11 @@ impl Parser {
         match lexer.tokenize() {
             Ok(_) => {
                 return Self {
-                    tokens: lexer.tokens,
+                    tokens: lexer
+                        .tokens
+                        .into_iter()
+                        .filter(|x| x.kind() != TokenKind::Newline)
+                        .collect(),
                     position: 0,
                 }
             }
