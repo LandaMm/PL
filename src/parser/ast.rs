@@ -1,6 +1,7 @@
 use crate::{
     lexer::token::{Decimal, Identifier, Integer, StringLiteral, Token, TokenKind},
     macros::bail,
+    Lexer,
 };
 
 use std::any::Any;
@@ -20,6 +21,19 @@ impl Parser {
         Self {
             tokens,
             position: 0,
+        }
+    }
+
+    pub fn from_source(source: String) -> Self {
+        let mut lexer = Lexer::new(source);
+        match lexer.tokenize() {
+            Ok(_) => {
+                return Self {
+                    tokens: lexer.tokens,
+                    position: 0,
+                }
+            }
+            Err(err) => panic!("Failed to tokenize source: {:?}", err),
         }
     }
 
