@@ -114,8 +114,6 @@ pub enum TokenKind {
     Newline,
     // Keywords
     Fn,
-    True,
-    False,
     Return,
     If,
     Else,
@@ -129,7 +127,6 @@ pub enum TokenKind {
     From,
     Static,
     Import,
-    Null,
     // Another required tokens for parser
     EOF, // signified the end of file.
 }

@@ -708,10 +708,6 @@ impl Parser {
                 }
                 bail!(ParseError::UnexpectedToken(token_kind, line, column))
             }
-            TokenKind::Null => {
-                self.eat(TokenKind::Null)?;
-                return Ok(Node::NullLiteral());
-            }
             TokenKind::StringLiteral => {
                 if let Some(string_literal) = token.downcast_ref::<StringLiteral>() {
                     self.eat(TokenKind::StringLiteral)?;
@@ -733,11 +729,6 @@ impl Parser {
                 self.eat(TokenKind::CloseSquareBracket)?;
 
                 Ok(Node::ArrayExpression(items))
-            }
-            TokenKind::True | TokenKind::False => {
-                self.eat(token_kind)?;
-
-                Ok(Node::BoolLiteral(token_kind == TokenKind::True))
             }
             TokenKind::OpenParen => {
                 self.eat(TokenKind::OpenParen)?; // eat open paren

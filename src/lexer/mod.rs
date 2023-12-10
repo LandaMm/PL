@@ -343,20 +343,6 @@ impl Lexer {
                                     self.append_token(Box::new(token), None);
                                     continue;
                                 }
-                                "true" => {
-                                    let mut token = Character::from(TokenKind::True);
-                                    token.set_line(identifier.line());
-                                    token.set_column(identifier.column());
-                                    self.append_token(Box::new(token), None);
-                                    continue;
-                                }
-                                "false" => {
-                                    let mut token = Character::from(TokenKind::False);
-                                    token.set_line(identifier.line());
-                                    token.set_column(identifier.column());
-                                    self.append_token(Box::new(token), None);
-                                    continue;
-                                }
                                 "return" => {
                                     let mut token = Character::from(TokenKind::Return);
                                     token.set_line(identifier.line());
@@ -429,13 +415,6 @@ impl Lexer {
                                 }
                                 "from" => {
                                     let mut token = Character::from(TokenKind::From);
-                                    token.set_line(identifier.line());
-                                    token.set_column(identifier.column());
-                                    self.append_token(Box::new(token), None);
-                                    continue;
-                                }
-                                "null" => {
-                                    let mut token = Character::from(TokenKind::Null);
                                     token.set_line(identifier.line());
                                     token.set_column(identifier.column());
                                     self.append_token(Box::new(token), None);
@@ -794,42 +773,6 @@ mod tests {
     }
 
     #[test]
-    fn test_keyword_true() {
-        let tokens = tokenize_string("true".to_string());
-        assert_eq!(tokens.len(), 2);
-        assert!(tokens
-            .get(0)
-            .is_some_and(|token| token.kind() == TokenKind::True));
-        assert!(tokens
-            .get(1)
-            .is_some_and(|token| token.kind() == TokenKind::EOF));
-    }
-
-    #[test]
-    fn test_keyword_false() {
-        let tokens = tokenize_string("false".to_string());
-        assert_eq!(tokens.len(), 2);
-        assert!(tokens
-            .get(0)
-            .is_some_and(|token| token.kind() == TokenKind::False));
-        assert!(tokens
-            .get(1)
-            .is_some_and(|token| token.kind() == TokenKind::EOF));
-    }
-
-    #[test]
-    fn test_keyword_null() {
-        let tokens = tokenize_string("null".to_string());
-        assert_eq!(tokens.len(), 2);
-        assert!(tokens
-            .get(0)
-            .is_some_and(|token| token.kind() == TokenKind::Null));
-        assert!(tokens
-            .get(1)
-            .is_some_and(|token| token.kind() == TokenKind::EOF));
-    }
-
-    #[test]
     fn test_keyword_import() {
         let tokens = tokenize_string("import".to_string());
         assert_eq!(tokens.len(), 2);
@@ -848,7 +791,7 @@ mod tests {
         );
         let expected: Vec<TokenKind> = vec![
             TokenKind::If,
-            TokenKind::True,
+            TokenKind::Identifier,
             TokenKind::And,
             TokenKind::Integer,
             TokenKind::Or,
