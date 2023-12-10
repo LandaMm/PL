@@ -355,7 +355,6 @@ impl Parser {
             || kind == TokenKind::Division
             || kind == TokenKind::Modulation
         {
-            println!("it's assignment expression!");
             self.eat(kind)?;
             let operator = match kind {
                 TokenKind::Equals => AssignmentOperator::Equals,
