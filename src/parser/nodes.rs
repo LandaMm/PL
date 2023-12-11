@@ -1,4 +1,4 @@
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum BinaryOperator {
     Plus,
     Minus,
@@ -11,13 +11,13 @@ pub enum BinaryOperator {
     NotEquals,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum LogicalOperator {
     And,
     Or,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum UnaryOperator {
     Increment,
     Decrement,
@@ -26,7 +26,7 @@ pub enum UnaryOperator {
     Negation,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum AssignmentOperator {
     Equals,
     Addition,
