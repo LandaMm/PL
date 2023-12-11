@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum BinaryOperator {
     Plus,
     Minus,
@@ -11,13 +11,13 @@ pub enum BinaryOperator {
     NotEquals,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum LogicalOperator {
     And,
     Or,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum UnaryOperator {
     Increment,
     Decrement,
@@ -26,7 +26,7 @@ pub enum UnaryOperator {
     Negation,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum AssignmentOperator {
     Equals,
     Addition,
@@ -36,7 +36,7 @@ pub enum AssignmentOperator {
     Modulation,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Node {
     // statements
     Program(Vec<Box<Node>>),                                        // body[]
