@@ -1,9 +1,10 @@
-use crate::lexer::token::TokenKind;
+use crate::{lexer::token::TokenKind, Node};
 
 #[derive(Debug)]
 pub enum ParseError {
     UnexpectedToken(TokenKind, usize, usize), // token_kind, line column
     ConstantNotInitialized(String, usize, usize), // variable_name, line, column
+    InvalidFunctionName(Box<Node>),
     UnexpectedEOF,
 }
 
@@ -27,6 +28,12 @@ impl std::fmt::Display for ParseError {
                     f,
                     "The constant {} must be initialized at {}:{}",
                     variable_name, line, column
+                )
+            }
+            ParseError::InvalidFunctionName(node) => {
+                write!(
+                    f,
+                    "Unexpected name of the function: {node:?}. Expected identifier."
                 )
             }
         }

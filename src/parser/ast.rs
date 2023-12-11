@@ -209,13 +209,18 @@ impl Parser {
         self.eat(TokenKind::Fn)?;
 
         let id = Box::new(self.identifier()?);
+        let name = match **dyn_clone::clone_box(&id) {
+            Node::Identifier(value) => value,
+            // should never reach this code
+            _ => bail!(ParseError::InvalidFunctionName(id)),
+        };
 
         let args = self.arguments()?;
 
         let body = Box::new(self.block_statement()?);
 
         Ok(Node::FunctionDeclaration(
-            id,
+            name,
             args.into_iter().map(|x| Box::new(x)).collect(),
             body,
         ))

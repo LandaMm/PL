@@ -42,7 +42,7 @@ pub enum Node {
     Program(Vec<Box<Node>>),                                        // body[]
     VariableDeclaration(String, Option<Box<Node>>, bool),           // var_name, value, is_constant
     BlockStatement(Vec<Box<Node>>),                                 // body[]
-    FunctionDeclaration(Box<Node>, Vec<Box<Node>>, Box<Node>), // identifier, params, block_statement(body)
+    FunctionDeclaration(String, Vec<Box<Node>>, Box<Node>), // name, params, block_statement(body)
     IfStatement(Box<Node>, Box<Node>, Option<Box<Node>>), // condition, body (consequent), alternate
     ForInStatement(Box<Node>, Box<Node>, Box<Node>),      // left, right, body[] (block_statement)
     ReturnStatement(Box<Node>),                           // value
