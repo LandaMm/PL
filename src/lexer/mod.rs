@@ -50,18 +50,23 @@ impl Lexer {
         self.source.chars().nth(self.position + 1)
     }
 
-    fn take_while(&mut self, filter: impl Fn(char) -> bool) -> Result<String, LexerError> {
+    fn take_while(
+        &mut self,
+        filter: impl Fn(char, Option<char>) -> bool,
+    ) -> Result<String, LexerError> {
         let mut chars: String = String::new();
+        let mut ch: Option<char> = None;
         loop {
-            let ch = self.peek();
+            let prev = ch;
+            ch = self.peek();
             if let Some(ch) = ch {
-                if !filter(ch) {
+                if !filter(ch, prev) {
                     break;
                 }
             }
             let ch = self.next_char().unwrap_or(None);
             if let Some(ch) = ch {
-                if filter(ch) {
+                if filter(ch, prev) {
                     chars.push(ch);
                 } else {
                     break;
@@ -83,7 +88,8 @@ impl Lexer {
 
         let line = self.line;
         let column = self.column;
-        let got = self.take_while(|ch| ch == '_' || ch.is_ascii_alphabetic() || ch.is_digit(10))?;
+        let got =
+            self.take_while(|ch, _prev| ch == '_' || ch.is_ascii_alphabetic() || ch.is_digit(10))?;
 
         let mut tok = Identifier::from(got);
         tok.set_line(line);
@@ -102,7 +108,7 @@ impl Lexer {
         let line = self.line;
         let column = self.column;
 
-        let got = self.take_while(|ch| ch.is_digit(10) || ch == '.')?;
+        let got = self.take_while(|ch, _prev| ch.is_digit(10) || ch == '.')?;
 
         // number can contain either 1 or zero points (dots)
         if got.matches('.').count() > 1 {
@@ -141,7 +147,7 @@ impl Lexer {
             _ => {}
         }
 
-        self.take_while(|ch| ch != '\n' && ch != '\r')?;
+        self.take_while(|ch, _prev| ch != '\n' && ch != '\r')?;
 
         Ok(())
     }
@@ -158,7 +164,7 @@ impl Lexer {
 
         self.next_char()?; // skip '"' character
 
-        let got = self.take_while(|ch| ch != '"')?;
+        let got = self.take_while(|ch, prev| ch != '"' && !prev.is_some_and(|pch| pch == '\\'))?;
 
         self.next_char()?; // skip '"' character (closing one)
 
@@ -189,7 +195,7 @@ impl Lexer {
     }
 
     fn is_end(&self) -> bool {
-        self.position >= self.source.len()
+        self.position >= self.source.chars().count()
     }
 
     pub fn tokenize(&mut self) -> Result<(), LexerError> {
@@ -331,7 +337,7 @@ impl Lexer {
                             let number = self.tokenize_number()?;
                             self.append_token(number, None);
                             continue;
-                        } else if ch.is_ascii_alphabetic() {
+                        } else if ch.is_alphabetic() {
                             let identifier = self.tokenize_ident()?;
 
                             let value = identifier.value();
