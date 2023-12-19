@@ -337,7 +337,7 @@ impl Parser {
     fn import_statement(&mut self) -> Result<Node, ParseError> {
         self.eat(TokenKind::Import)?;
 
-        let entity = self.member_expression()?;
+        let entity = self.member_expression(None)?;
 
         Ok(Node::ImportStatement(Box::new(entity)))
     }
@@ -610,13 +610,23 @@ impl Parser {
     }
 
     fn call_member_expression(&mut self) -> Result<Node, ParseError> {
-        let member = self.member_expression()?;
+        let mut result = self.member_expression(None)?;
+        println!("member: {result:#?}");
 
-        if self.get_current_token()?.kind() == TokenKind::OpenParen {
-            return Ok(self.call_expression(member)?);
+        while self.not_eof()
+            && (self.get_current_token()?.kind() == TokenKind::OpenParen
+                || self.get_current_token()?.kind() == TokenKind::Point
+                || self.get_current_token()?.kind() == TokenKind::OpenSquareBracket)
+        {
+            let kind = self.get_current_token()?.kind();
+            if kind == TokenKind::OpenParen {
+                result = self.call_expression(result)?;
+            } else {
+                result = self.member_expression(Some(result))?;
+            }
         }
 
-        Ok(member)
+        Ok(result)
     }
 
     fn call_expression(&mut self, callee: Node) -> Result<Node, ParseError> {
@@ -633,33 +643,12 @@ impl Parser {
         Ok(result)
     }
 
-    fn arguments(&mut self) -> Result<Vec<Node>, ParseError> {
-        self.eat(TokenKind::OpenParen)?;
-
-        let args = if self.get_current_token()?.kind() != TokenKind::CloseParen {
-            self.arguments_list()?
+    fn member_expression(&mut self, node: Option<Node>) -> Result<Node, ParseError> {
+        let mut object = if node.is_some() {
+            node.unwrap()
         } else {
-            vec![]
+            self.primary_expression()?
         };
-
-        self.eat(TokenKind::CloseParen)?;
-
-        Ok(args)
-    }
-
-    fn arguments_list(&mut self) -> Result<Vec<Node>, ParseError> {
-        let mut args: Vec<Node> = vec![self.expression()?];
-
-        while self.not_eof() && self.get_current_token()?.kind() == TokenKind::Comma {
-            self.eat(TokenKind::Comma)?;
-            args.push(self.expression()?);
-        }
-
-        Ok(args)
-    }
-
-    fn member_expression(&mut self) -> Result<Node, ParseError> {
-        let mut object = self.primary_expression()?;
 
         while self.get_current_token()?.kind() == TokenKind::Point
             || self.get_current_token()?.kind() == TokenKind::OpenSquareBracket
@@ -685,6 +674,31 @@ impl Parser {
         }
 
         Ok(object)
+    }
+
+    fn arguments(&mut self) -> Result<Vec<Node>, ParseError> {
+        self.eat(TokenKind::OpenParen)?;
+
+        let args = if self.get_current_token()?.kind() != TokenKind::CloseParen {
+            self.arguments_list()?
+        } else {
+            vec![]
+        };
+
+        self.eat(TokenKind::CloseParen)?;
+
+        Ok(args)
+    }
+
+    fn arguments_list(&mut self) -> Result<Vec<Node>, ParseError> {
+        let mut args: Vec<Node> = vec![self.expression()?];
+
+        while self.not_eof() && self.get_current_token()?.kind() == TokenKind::Comma {
+            self.eat(TokenKind::Comma)?;
+            args.push(self.expression()?);
+        }
+
+        Ok(args)
     }
 
     fn primary_expression(&mut self) -> Result<Node, ParseError> {
