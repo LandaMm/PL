@@ -57,6 +57,7 @@ impl Debug for dyn Token {
 #[derive(Debug)]
 pub enum LexerError {
     UnexpectedToken(String),
+    UnexpectedEscapeCharacter(char),
     ParseNumberError(String),
     UnexpectedEOF,
 }
@@ -67,6 +68,9 @@ impl std::fmt::Display for LexerError {
             LexerError::UnexpectedEOF => write!(f, "Unexpected EOF"),
             LexerError::UnexpectedToken(ref value) => {
                 write!(f, "Unexpected token: '{}'", value)
+            }
+            LexerError::UnexpectedEscapeCharacter(ref value) => {
+                write!(f, "Unexpected escape character: '\\{}'", value)
             }
             LexerError::ParseNumberError(ref value) => {
                 write!(f, "Failed to parse number: '{}'", value)

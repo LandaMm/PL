@@ -4,6 +4,35 @@ use self::token::{
     Character, Decimal, Identifier, Integer, LexerError, StringLiteral, Token, TokenKind,
 };
 
+#[derive(PartialEq, Debug)]
+enum TakeVariant {
+    Take,
+    Skip,
+    Stop,
+    Custom(char),
+}
+
+fn escape_character(ch: char) -> Result<char, LexerError> {
+    match ch {
+        't' => {
+            return Ok('\t');
+        }
+        'n' => {
+            return Ok('\n');
+        }
+        'r' => {
+            return Ok('\r');
+        }
+        '"' => {
+            return Ok('"');
+        }
+        '\'' => {
+            return Ok('\'');
+        }
+        _ => bail!(LexerError::UnexpectedEscapeCharacter(ch)),
+    }
+}
+
 pub mod token;
 
 pub struct Lexer {
@@ -52,7 +81,7 @@ impl Lexer {
 
     fn take_while(
         &mut self,
-        filter: impl Fn(char, Option<char>) -> bool,
+        filter: impl Fn(char, Option<char>) -> Result<TakeVariant, LexerError>,
     ) -> Result<String, LexerError> {
         let mut chars: String = String::new();
         let mut ch: Option<char> = None;
@@ -60,15 +89,22 @@ impl Lexer {
             let prev = ch;
             ch = self.peek();
             if let Some(ch) = ch {
-                if !filter(ch, prev) {
+                if filter(ch, prev)? == TakeVariant::Stop {
                     break;
                 }
             }
             let ch = self.next_char().unwrap_or(None);
             if let Some(ch) = ch {
-                if filter(ch, prev) {
+                let res = filter(ch, prev)?;
+
+                if let TakeVariant::Custom(cch) = res {
+                    chars.push(cch);
+                    continue;
+                }
+
+                if res == TakeVariant::Take {
                     chars.push(ch);
-                } else {
+                } else if res != TakeVariant::Skip {
                     break;
                 }
             } else {
@@ -88,8 +124,13 @@ impl Lexer {
 
         let line = self.line;
         let column = self.column;
-        let got =
-            self.take_while(|ch, _prev| ch == '_' || ch.is_ascii_alphabetic() || ch.is_digit(10))?;
+        let got = self.take_while(|ch, _prev| {
+            if ch == '_' || ch.is_ascii_alphabetic() || ch.is_digit(10) {
+                return Ok(TakeVariant::Take);
+            }
+
+            Ok(TakeVariant::Stop)
+        })?;
 
         let mut tok = Identifier::from(got);
         tok.set_line(line);
@@ -108,7 +149,13 @@ impl Lexer {
         let line = self.line;
         let column = self.column;
 
-        let got = self.take_while(|ch, _prev| ch.is_digit(10) || ch == '.')?;
+        let got = self.take_while(|ch, _prev| {
+            if ch.is_digit(10) || ch == '.' {
+                return Ok(TakeVariant::Take);
+            }
+
+            Ok(TakeVariant::Stop)
+        })?;
 
         // number can contain either 1 or zero points (dots)
         if got.matches('.').count() > 1 {
@@ -147,7 +194,13 @@ impl Lexer {
             _ => {}
         }
 
-        self.take_while(|ch, _prev| ch != '\n' && ch != '\r')?;
+        self.take_while(|ch, _prev| {
+            if ch != '\n' && ch != '\r' {
+                return Ok(TakeVariant::Take);
+            }
+
+            Ok(TakeVariant::Stop)
+        })?;
 
         Ok(())
     }
@@ -164,7 +217,29 @@ impl Lexer {
 
         self.next_char()?; // skip '"' character
 
-        let got = self.take_while(|ch, prev| ch != '"' && !prev.is_some_and(|pch| pch == '\\'))?;
+        let got = self.take_while(|ch, prev| {
+            if let Some(pch) = prev {
+                if pch == '\\' {
+                    let escape_ch = match escape_character(ch) {
+                        Ok(ch) => ch,
+                        Err(_) => bail!(LexerError::UnexpectedEscapeCharacter(ch)),
+                    };
+                    return Ok(TakeVariant::Custom(escape_ch));
+                }
+            }
+
+            if ch == '\\' {
+                return Ok(TakeVariant::Skip);
+            }
+
+            if ch != '"' {
+                return Ok(TakeVariant::Take);
+            }
+
+            Ok(TakeVariant::Stop)
+        })?;
+
+        println!("got string: {}", got);
 
         self.next_char()?; // skip '"' character (closing one)
 
