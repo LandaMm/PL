@@ -611,8 +611,6 @@ impl Parser {
 
     fn call_member_expression(&mut self) -> Result<Node, ParseError> {
         let mut result = self.member_expression(None)?;
-        println!("member: {result:#?}");
-
         while self.not_eof()
             && (self.get_current_token()?.kind() == TokenKind::OpenParen
                 || self.get_current_token()?.kind() == TokenKind::Point
