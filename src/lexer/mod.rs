@@ -239,8 +239,6 @@ impl Lexer {
             Ok(TakeVariant::Stop)
         })?;
 
-        println!("got string: {}", got);
-
         self.next_char()?; // skip '"' character (closing one)
 
         let mut token = StringLiteral::from(got);
