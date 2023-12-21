@@ -168,13 +168,13 @@ impl Parser {
             self.eat(TokenKind::Static)?;
         }
         let id = self.identifier()?;
+        let name = match id {
+            Node::Identifier(name) => name,
+            _ => bail!(ParseError::InvalidPropertyName(Box::new(id))),
+        };
         self.eat(TokenKind::Equals)?;
         let value = self.expression()?;
-        Ok(Node::PropertyDefinition(
-            Box::new(id),
-            Box::new(value),
-            is_static,
-        ))
+        Ok(Node::PropertyDefinition(name, Box::new(value), is_static))
     }
 
     fn class_method_definition(&mut self) -> Result<Node, ParseError> {
@@ -187,10 +187,14 @@ impl Parser {
         }
         self.eat(TokenKind::Fn)?;
         let id = self.identifier()?;
+        let name = match id {
+            Node::Identifier(name) => name,
+            _ => bail!(ParseError::InvalidMethodName(Box::new(id))),
+        };
         let args = self.arguments()?;
         let block = self.block_statement()?;
         Ok(Node::MethodDefinition(
-            Box::new(id),
+            name,
             args.into_iter().map(|x| Box::new(x)).collect(),
             Box::new(block),
             is_static,

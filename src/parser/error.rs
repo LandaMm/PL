@@ -6,6 +6,8 @@ pub enum ParseError {
     ConstantNotInitialized(String, usize, usize), // variable_name, line, column
     InvalidFunctionName(Box<Node>),
     InvalidClassName(Box<Node>),
+    InvalidPropertyName(Box<Node>),
+    InvalidMethodName(Box<Node>),
     UnexpectedEOF,
 }
 
@@ -41,6 +43,18 @@ impl std::fmt::Display for ParseError {
                 write!(
                     f,
                     "Unexpected name of the class: {node:?}. Expected identifier."
+                )
+            }
+            ParseError::InvalidPropertyName(node) => {
+                write!(
+                    f,
+                    "Unexpected name of the property: {node:?}. Expected identifier."
+                )
+            }
+            ParseError::InvalidMethodName(node) => {
+                write!(
+                    f,
+                    "Unexpected name of the method: {node:?}. Expected identifier."
                 )
             }
         }

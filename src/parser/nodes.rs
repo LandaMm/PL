@@ -49,8 +49,8 @@ pub enum Node {
     ImportStatement(Box<Node>),                           // import entity
 
     ClassDeclaration(String, Option<Box<Node>>, Vec<Box<Node>>), // id, super_class, body
-    PropertyDefinition(Box<Node>, Box<Node>, bool),              // id, value, is_static
-    MethodDefinition(Box<Node>, Vec<Box<Node>>, Box<Node>, bool), // key, params, body, is_static
+    PropertyDefinition(String, Box<Node>, bool),                 // id, value, is_static
+    MethodDefinition(String, Vec<Box<Node>>, Box<Node>, bool),   // key, params, body, is_static
 
     // literals
     IntegerLiteral(usize), // value
