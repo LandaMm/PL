@@ -5,6 +5,7 @@ pub enum ParseError {
     UnexpectedToken(TokenKind, usize, usize), // token_kind, line column
     ConstantNotInitialized(String, usize, usize), // variable_name, line, column
     InvalidFunctionName(Box<Node>),
+    InvalidClassName(Box<Node>),
     UnexpectedEOF,
 }
 
@@ -34,6 +35,12 @@ impl std::fmt::Display for ParseError {
                 write!(
                     f,
                     "Unexpected name of the function: {node:?}. Expected identifier."
+                )
+            }
+            ParseError::InvalidClassName(node) => {
+                write!(
+                    f,
+                    "Unexpected name of the class: {node:?}. Expected identifier."
                 )
             }
         }

@@ -107,7 +107,11 @@ impl Parser {
     fn class_declaration(&mut self) -> Result<Node, ParseError> {
         self.eat(TokenKind::Class)?;
 
-        let class_name = self.identifier()?;
+        let class_id = self.identifier()?;
+        let class_name = match class_id {
+            Node::Identifier(name) => name,
+            _ => bail!(ParseError::InvalidClassName(Box::new(class_id))),
+        };
 
         let super_class: Option<Box<Node>> = match self.get_current_token()?.kind() {
             TokenKind::From => {
@@ -128,11 +132,7 @@ impl Parser {
 
         self.eat(TokenKind::CloseCurlyBrace)?;
 
-        Ok(Node::ClassDeclaration(
-            Box::new(class_name),
-            super_class,
-            body,
-        ))
+        Ok(Node::ClassDeclaration(class_name, super_class, body))
     }
 
     fn class_statement(&mut self) -> Result<Node, ParseError> {

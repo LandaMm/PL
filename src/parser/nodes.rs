@@ -39,16 +39,17 @@ pub enum AssignmentOperator {
 #[derive(Debug, Clone)]
 pub enum Node {
     // statements
-    Program(Vec<Box<Node>>),                                        // body[]
-    VariableDeclaration(String, Option<Box<Node>>, bool),           // var_name, value, is_constant
-    BlockStatement(Vec<Box<Node>>),                                 // body[]
+    Program(Vec<Box<Node>>),                                // body[]
+    VariableDeclaration(String, Option<Box<Node>>, bool),   // var_name, value, is_constant
+    BlockStatement(Vec<Box<Node>>),                         // body[]
     FunctionDeclaration(String, Vec<Box<Node>>, Box<Node>), // name, params, block_statement(body)
     IfStatement(Box<Node>, Box<Node>, Option<Box<Node>>), // condition, body (consequent), alternate
     ForInStatement(Box<Node>, Box<Node>, Box<Node>),      // left, right, body[] (block_statement)
     ReturnStatement(Box<Node>),                           // value
     ImportStatement(Box<Node>),                           // import entity
-    ClassDeclaration(Box<Node>, Option<Box<Node>>, Vec<Box<Node>>), // id, super_class, body
-    PropertyDefinition(Box<Node>, Box<Node>, bool),       // id, value, is_static
+
+    ClassDeclaration(String, Option<Box<Node>>, Vec<Box<Node>>), // id, super_class, body
+    PropertyDefinition(Box<Node>, Box<Node>, bool),              // id, value, is_static
     MethodDefinition(Box<Node>, Vec<Box<Node>>, Box<Node>, bool), // key, params, body, is_static
 
     // literals
