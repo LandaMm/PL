@@ -410,7 +410,7 @@ impl Lexer {
                             let number = self.tokenize_number()?;
                             self.append_token(number, None);
                             continue;
-                        } else if ch.is_alphabetic() {
+                        } else if ch.is_alphabetic() || ch == '_' {
                             let identifier = self.tokenize_ident()?;
 
                             let value = identifier.value();

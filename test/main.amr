@@ -1,10 +1,2 @@
 
-print()
-let t = 0
-some_string.length
-let t = 0
-some_string.trim().trim_again
-let t = 0
-s.say()
-let t = 0
-calc().trim()
+let __test = "hello world!"
