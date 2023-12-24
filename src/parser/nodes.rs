@@ -45,6 +45,7 @@ pub enum Node {
     FunctionDeclaration(String, Vec<Box<Node>>, Box<Node>), // name, params, block_statement(body)
     IfStatement(Box<Node>, Box<Node>, Option<Box<Node>>), // condition, body (consequent), alternate
     ForInStatement(Box<Node>, Box<Node>, Box<Node>),      // left, right, body[] (block_statement)
+    WhileStatement(Box<Node>, Box<Node>),                 // condition, body
     ReturnStatement(Box<Node>),                           // value
     ImportStatement(Box<Node>),                           // import entity
 
