@@ -1,2 +1,5 @@
 
-let __test = "hello world!"
+
+while 5 == 5 {
+  print("hello world!")
+}
