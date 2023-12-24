@@ -753,17 +753,25 @@ impl Parser {
             TokenKind::OpenSquareBracket => {
                 self.eat(TokenKind::OpenSquareBracket)?;
 
-                let mut items: Vec<Box<Node>> = vec![Box::new(self.expression()?)];
+                let mut items: Vec<Box<Node>> = vec![];
 
-                while self.get_current_token()?.kind() == TokenKind::Comma {
-                    self.eat(TokenKind::Comma)?;
-                    let item = Box::new(self.expression()?);
-                    items.push(item);
+                if self.get_current_token()?.kind() == TokenKind::CloseSquareBracket {
+                    self.eat(TokenKind::CloseSquareBracket)?;
+
+                    Ok(Node::ArrayExpression(items))
+                } else {
+                    items.push(Box::new(self.expression()?));
+
+                    while self.get_current_token()?.kind() == TokenKind::Comma {
+                        self.eat(TokenKind::Comma)?;
+                        let item = Box::new(self.expression()?);
+                        items.push(item);
+                    }
+
+                    self.eat(TokenKind::CloseSquareBracket)?;
+
+                    Ok(Node::ArrayExpression(items))
                 }
-
-                self.eat(TokenKind::CloseSquareBracket)?;
-
-                Ok(Node::ArrayExpression(items))
             }
             TokenKind::OpenParen => {
                 self.eat(TokenKind::OpenParen)?; // eat open paren
