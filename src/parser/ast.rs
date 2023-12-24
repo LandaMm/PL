@@ -232,6 +232,8 @@ impl Parser {
     }
 
     fn while_statement(&mut self) -> Result<Node, ParseError> {
+        self.eat(TokenKind::While)?;
+
         let condition = self.expression()?;
 
         let consequent = self.block_statement()?;
