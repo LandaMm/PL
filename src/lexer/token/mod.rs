@@ -131,6 +131,7 @@ pub enum TokenKind {
     From,
     Static,
     Import,
+    While,
     // Another required tokens for parser
     EOF, // signified the end of file.
 }

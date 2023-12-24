@@ -513,6 +513,13 @@ impl Lexer {
                                     self.append_token(Box::new(token), None);
                                     continue;
                                 }
+                                "while" => {
+                                    let mut token = Character::from(TokenKind::While);
+                                    token.set_line(identifier.line());
+                                    token.set_column(identifier.column());
+                                    self.append_token(Box::new(token), None);
+                                    continue;
+                                }
                                 _ => {}
                             };
 
