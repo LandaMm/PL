@@ -96,6 +96,7 @@ impl Parser {
             TokenKind::Let | TokenKind::Const => self.variable_declaration(),
             TokenKind::Fn => self.function_declaration(),
             TokenKind::If => self.if_statement(),
+            TokenKind::While => self.while_statement(),
             TokenKind::For => self.for_statement(),
             TokenKind::Return => self.return_statement(),
             TokenKind::Import => self.import_statement(),
@@ -227,6 +228,17 @@ impl Parser {
             name,
             args.into_iter().map(|x| Box::new(x)).collect(),
             body,
+        ))
+    }
+
+    fn while_statement(&mut self) -> Result<Node, ParseError> {
+        let condition = self.expression()?;
+
+        let consequent = self.block_statement()?;
+
+        Ok(Node::WhileStatement(
+            Box::new(condition),
+            Box::new(consequent),
         ))
     }
 
