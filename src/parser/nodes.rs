@@ -1,4 +1,6 @@
-#[derive(Debug, Clone, PartialEq)]
+use serde::Serialize;
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum BinaryOperator {
     Plus,
     Minus,
@@ -11,13 +13,13 @@ pub enum BinaryOperator {
     NotEquals,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum LogicalOperator {
     And,
     Or,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum UnaryOperator {
     Increment,
     Decrement,
@@ -26,7 +28,7 @@ pub enum UnaryOperator {
     Negation,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub enum AssignmentOperator {
     Equals,
     Addition,
@@ -36,7 +38,7 @@ pub enum AssignmentOperator {
     Modulation,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub enum Node {
     // statements
     Program(Vec<Box<Node>>),                                // body[]
